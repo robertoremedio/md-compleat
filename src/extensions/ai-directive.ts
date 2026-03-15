@@ -5,10 +5,20 @@ function escapeAttr(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
 
-export const AiDirective = Node.create({
+export interface AiDirectiveOptions {
+  shortcut: string;
+}
+
+export const AiDirective = Node.create<AiDirectiveOptions>({
   name: 'aiDirective',
   group: 'block',
   atom: true,
+
+  addOptions() {
+    return {
+      shortcut: 'Mod-Shift-A',
+    };
+  },
 
   addAttributes() {
     return {
@@ -81,6 +91,15 @@ export const AiDirective = Node.create({
           });
         },
     };
+  },
+
+  addKeyboardShortcuts() {
+    return {
+      [this.options.shortcut]: ({ editor }) => {
+        editor.commands.insertAiDirective({ instruction: '' });
+        return true;
+      },
+    } as any;
   },
 
   addInputRules() {

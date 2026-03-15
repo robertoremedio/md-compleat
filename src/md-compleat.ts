@@ -10,6 +10,7 @@ import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import { AiDirective } from './extensions/ai-directive.js';
+import { AiSuggestion } from './extensions/ai-suggestion.js';
 
 const LinkShortcut = Extension.create({
   name: 'linkShortcut',
@@ -231,9 +232,42 @@ export class MdCompleat extends LitElement {
       word-break: break-word;
     }
 
+    .ai-chip__toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0 0.25em;
+      margin-right: 0.25em;
+      font-size: 1em;
+      color: rgba(0, 0, 0, 0.4);
+      flex-shrink: 0;
+    }
+
+    .ai-chip__toggle:hover {
+      color: rgba(0, 0, 0, 0.7);
+    }
+
+    .ai-suggestion {
+      position: absolute;
+      background: #fff;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      padding: 0.5em 0.75em;
+      cursor: pointer;
+      z-index: 10;
+      font-family: var(--md-compleat-font-family);
+      font-size: 0.9em;
+    }
+
+    .ai-suggestion:hover {
+      background: #f0e6ff;
+    }
+
   `;
 
   @property({ type: String }) content = '';
+  @property({ type: String, attribute: 'ai-shortcut' }) aiShortcut = '';
 
   private _editor: Editor | null = null;
   private _updatingFromEditor = false;
@@ -280,7 +314,6 @@ export class MdCompleat extends LitElement {
   private _initEditor() {
     const element = this.renderRoot.querySelector('.editor');
     if (!element) return;
-
     this._editor = new Editor({
       element: element as HTMLElement,
       extensions: [
@@ -299,7 +332,10 @@ export class MdCompleat extends LitElement {
         TableRow,
         TableHeader,
         TableCell,
-        AiDirective,
+        AiDirective.configure({
+          ...(this.aiShortcut ? { shortcut: this.aiShortcut } : {}),
+        }),
+        AiSuggestion,
       ],
       content: this.content,
       injectCSS: false,

@@ -14,19 +14,30 @@ export function aiDirectiveNodeView({ node, editor, getPos }: NodeViewRendererPr
   icon.textContent = '▶';
   dom.appendChild(icon);
 
+  const toggle = document.createElement('button');
+  toggle.classList.add('ai-chip__toggle');
+  toggle.textContent = '⤢';
+  toggle.type = 'button';
+  toggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const newVariant = currentNode.attrs.variant === 'self-closing' ? 'block' : 'self-closing';
+    updateAttributes({ variant: newVariant });
+  });
+  dom.appendChild(toggle);
+
   let instructionEl = createInstructionSpan();
   dom.appendChild(instructionEl);
 
   // Auto-enter edit mode for empty instructions
   if (!currentNode.attrs.instruction) {
-    queueMicrotask(() => enterEditMode());
+    queueMicrotask(() => enterEditMode(true));
   }
 
   function createInstructionSpan(): HTMLSpanElement {
     const span = document.createElement('span');
     span.classList.add('ai-chip__instruction');
     span.textContent = currentNode.attrs.instruction;
-    span.addEventListener('click', enterEditMode);
+    span.addEventListener('click', () => enterEditMode(false));
     return span;
   }
 
@@ -38,12 +49,16 @@ export function aiDirectiveNodeView({ node, editor, getPos }: NodeViewRendererPr
     editor.view.dispatch(tr);
   }
 
-  function enterEditMode() {
+  function enterEditMode(auto: boolean) {
     if (destroyed || editing) return;
     editing = true;
 
-    const input = document.createElement('input');
-    input.type = 'text';
+    const isBlock = currentNode.attrs.variant === 'block';
+    const input = isBlock
+      ? document.createElement('textarea')
+      : document.createElement('input');
+    if (!isBlock) (input as HTMLInputElement).type = 'text';
+    if (isBlock) (input as HTMLTextAreaElement).rows = 4;
     input.value = currentNode.attrs.instruction;
     input.classList.add('ai-chip__input');
 
@@ -60,9 +75,8 @@ export function aiDirectiveNodeView({ node, editor, getPos }: NodeViewRendererPr
       showDisplay();
     };
 
-    input.addEventListener('blur', commit);
     input.addEventListener('keydown', (e: KeyboardEvent) => {
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' && !isBlock) {
         e.preventDefault();
         input.removeEventListener('blur', commit);
         commit();
@@ -74,7 +88,20 @@ export function aiDirectiveNodeView({ node, editor, getPos }: NodeViewRendererPr
     });
 
     instructionEl.replaceWith(input);
-    input.focus();
+
+    if (auto) {
+      // Delay focus and blur handler for auto-edit to let ProseMirror's
+      // MutationObserver settle — otherwise it steals focus immediately,
+      // triggering blur → commit → showDisplay which removes the input.
+      setTimeout(() => {
+        if (destroyed || !editing) return;
+        input.addEventListener('blur', commit);
+        input.focus();
+      }, 0);
+    } else {
+      input.addEventListener('blur', commit);
+      input.focus();
+    }
   }
 
   function showDisplay() {
@@ -101,8 +128,12 @@ export function aiDirectiveNodeView({ node, editor, getPos }: NodeViewRendererPr
       return true;
     },
     stopEvent(event: Event) {
-      const target = event.target as Node;
-      return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
+      const target = event.target as HTMLElement;
+      return (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target.classList?.contains('ai-chip__toggle')
+      );
     },
     ignoreMutation() {
       return true;
