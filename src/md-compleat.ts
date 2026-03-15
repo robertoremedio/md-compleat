@@ -274,6 +274,7 @@ export class MdCompleat extends LitElement {
   @property({ type: String, attribute: 'ai-api-key' }) aiApiKey = '';
   @property({ type: String, attribute: 'ai-endpoint' }) aiEndpoint = '';
   @property({ type: String, attribute: 'ai-cli-command' }) aiCliCommand = '';
+  @property({ type: String, attribute: 'ai-proxy-headers' }) aiProxyHeaders = '';
 
   private _editor: Editor | null = null;
   private _updatingFromEditor = false;
