@@ -1,4 +1,6 @@
 import { Node, mergeAttributes } from '@tiptap/core';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { aiDirectiveNodeView } from './ai-directive-view.js';
 
 function escapeAttr(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
@@ -20,8 +22,26 @@ export const AiDirective = Node.create({
     return [
       {
         tag: 'ai',
+        // Higher priority to handle nested/self-closing ai tags
+        priority: 60,
         getAttrs(element) {
           const el = element as HTMLElement;
+
+          // Fix self-closing <ai/> nesting: if this <ai> contains child <ai> elements,
+          // flatten by extracting the nested ones as siblings before parsing.
+          const nestedAi = el.querySelector('ai');
+          if (nestedAi) {
+            // Move all children after the first <ai> to be siblings
+            const parent = el.parentNode;
+            if (parent) {
+              let sibling = el.nextSibling;
+              // Move all child nodes out after this element
+              while (el.firstChild) {
+                parent.insertBefore(el.firstChild, sibling);
+              }
+            }
+          }
+
           const variant = el.getAttribute('data-variant');
           const attrInstruction = el.getAttribute('instruction');
           if (variant === 'block') {
@@ -42,6 +62,63 @@ export const AiDirective = Node.create({
       return ['ai', { instruction: node.attrs.instruction, 'data-variant': 'block' }];
     }
     return ['ai', mergeAttributes({ instruction: node.attrs.instruction })];
+  },
+
+  addNodeView() {
+    return aiDirectiveNodeView;
+  },
+
+  addCommands() {
+    return {
+      insertAiDirective:
+        (attrs: { instruction: string; variant?: string }) =>
+        ({ commands }: any) => {
+          return commands.insertContent({
+            type: 'aiDirective',
+            attrs: {
+              instruction: attrs.instruction,
+              variant: attrs.variant || 'self-closing',
+            },
+          });
+        },
+    };
+  },
+
+  addProseMirrorPlugins() {
+    const aiDirectiveType = this.type;
+    return [
+      new Plugin({
+        key: new PluginKey('aiDirectiveSlashCommand'),
+        appendTransaction(transactions, _oldState, newState) {
+          if (!transactions.some((tr) => tr.docChanged)) return null;
+
+          let found = false;
+          let matchFrom = 0;
+          let matchTo = 0;
+
+          newState.doc.descendants((node, pos) => {
+            if (found) return false;
+            if (!node.isTextblock) return true;
+            const text = node.textContent;
+            // Only match if the entire block content is "/ai "
+            if (text === '/ai ') {
+              found = true;
+              matchFrom = pos;
+              matchTo = pos + node.nodeSize;
+            }
+            return false;
+          });
+
+          if (!found) return null;
+
+          const aiNode = aiDirectiveType.create({
+            instruction: '',
+            variant: 'self-closing',
+          });
+          return newState.tr.replaceWith(matchFrom, matchTo, aiNode);
+        },
+      }),
+    ];
   },
 
   addStorage() {

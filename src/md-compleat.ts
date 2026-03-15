@@ -207,6 +207,30 @@ export class MdCompleat extends LitElement {
       height: auto;
     }
 
+    /* AI directive chips */
+    .ai-chip {
+      display: flex;
+      align-items: center;
+      background: var(--md-compleat-ai-chip-bg, #f0e6ff);
+      border-left: 3px solid var(--md-compleat-ai-chip-border, #7c3aed);
+      border-radius: 4px;
+      padding: 0.5em 0.75em;
+      margin: 0.5em 0;
+      cursor: pointer;
+    }
+
+    .ai-chip__icon {
+      color: rgba(0, 0, 0, 0.4);
+      margin-right: 0.5em;
+      flex-shrink: 0;
+    }
+
+    .ai-chip__instruction {
+      font-family: var(--md-compleat-font-mono);
+      flex: 1;
+      word-break: break-word;
+    }
+
   `;
 
   @property({ type: String }) content = '';
