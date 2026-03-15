@@ -566,6 +566,85 @@ describe('CliProvider', () => {
         expect.objectContaining({ stdio: ['pipe', 'pipe', 'pipe'] }),
       );
     });
+
+    // -- Changes 1 & 2: Settlement guard + abort listener cleanup -------------
+
+    it('removes abort listener after successful completion', async () => {
+      simulateSuccess('output');
+      const provider = await createMockedProvider('my-llm');
+      const controller = new AbortController();
+
+      const removeListenerSpy = vi.spyOn(controller.signal, 'removeEventListener');
+
+      await provider.execute('doc', controller.signal);
+
+      expect(removeListenerSpy).toHaveBeenCalledWith('abort', expect.any(Function));
+    });
+
+    it('removes abort listener after failed completion', async () => {
+      simulateFailure(1, 'error output');
+      const provider = await createMockedProvider('my-llm');
+      const controller = new AbortController();
+
+      const removeListenerSpy = vi.spyOn(controller.signal, 'removeEventListener');
+
+      await expect(provider.execute('doc', controller.signal)).rejects.toThrow();
+
+      expect(removeListenerSpy).toHaveBeenCalledWith('abort', expect.any(Function));
+    });
+
+    it('removes abort listener after process error', async () => {
+      simulateProcessError('spawn ENOENT');
+      const provider = await createMockedProvider('my-llm');
+      const controller = new AbortController();
+
+      const removeListenerSpy = vi.spyOn(controller.signal, 'removeEventListener');
+
+      await expect(provider.execute('doc', controller.signal)).rejects.toThrow();
+
+      expect(removeListenerSpy).toHaveBeenCalledWith('abort', expect.any(Function));
+    });
+
+    // -- Change 3: Shell-quote command parsing --------------------------------
+
+    it('parses double-quoted arguments in command string', async () => {
+      simulateSuccess('output');
+      const provider = await createMockedProvider('my-llm --prompt "hello world"');
+
+      await provider.execute('doc');
+
+      expect(spawnMock).toHaveBeenCalledWith(
+        'my-llm',
+        ['--prompt', 'hello world'],
+        expect.objectContaining({ stdio: ['pipe', 'pipe', 'pipe'] }),
+      );
+    });
+
+    it('parses single-quoted arguments in command string', async () => {
+      simulateSuccess('output');
+      const provider = await createMockedProvider("my-llm --msg 'hi there'");
+
+      await provider.execute('doc');
+
+      expect(spawnMock).toHaveBeenCalledWith(
+        'my-llm',
+        ['--msg', 'hi there'],
+        expect.objectContaining({ stdio: ['pipe', 'pipe', 'pipe'] }),
+      );
+    });
+
+    it('handles mixed quoting styles in command string', async () => {
+      simulateSuccess('output');
+      const provider = await createMockedProvider(`my-llm --a "hello world" --b 'foo bar'`);
+
+      await provider.execute('doc');
+
+      expect(spawnMock).toHaveBeenCalledWith(
+        'my-llm',
+        ['--a', 'hello world', '--b', 'foo bar'],
+        expect.objectContaining({ stdio: ['pipe', 'pipe', 'pipe'] }),
+      );
+    });
   });
 
   // -- Factory integration ---------------------------------------------------
