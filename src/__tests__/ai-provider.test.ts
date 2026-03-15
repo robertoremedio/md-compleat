@@ -176,6 +176,37 @@ describe('HttpProvider with Anthropic adapter', () => {
     const [url] = fetchSpy.mock.calls[0];
     expect(url).toBe('https://custom.api.example.com/v1/messages');
   });
+
+  it('includes the document content in the user message', async () => {
+    const { createProvider } = await importFactory();
+
+    const provider = createProvider({
+      provider: 'anthropic',
+      apiKey: 'k',
+      model: 'm',
+    });
+
+    await provider.execute('# My Document\n\nSome content here.');
+
+    const body = JSON.parse(fetchSpy.mock.calls[0][1].body);
+    expect(body.messages[0].content).toContain('# My Document');
+  });
+
+  it('includes the system prompt in the request body', async () => {
+    const { createProvider } = await importFactory();
+    const { getSystemPrompt } = await importPrompt();
+
+    const provider = createProvider({
+      provider: 'anthropic',
+      apiKey: 'k',
+      model: 'm',
+    });
+
+    await provider.execute('doc');
+
+    const body = JSON.parse(fetchSpy.mock.calls[0][1].body);
+    expect(body.system).toBe(getSystemPrompt());
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -245,6 +276,72 @@ describe('HttpProvider with OpenAI adapter', () => {
 
     const result = await provider.execute('doc');
     expect(result).toBe('response-from-openai');
+  });
+
+  it('passes AbortSignal to fetch', async () => {
+    const { createProvider } = await importFactory();
+
+    const provider = createProvider({
+      provider: 'openai',
+      apiKey: 'k',
+      model: 'm',
+    });
+
+    const controller = new AbortController();
+    await provider.execute('doc', controller.signal);
+
+    const [, init] = fetchSpy.mock.calls[0];
+    expect(init.signal).toBe(controller.signal);
+  });
+
+  it('throws on non-ok response with status info', async () => {
+    fetchSpy.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      statusText: 'Unauthorized',
+    });
+
+    const { createProvider } = await importFactory();
+
+    const provider = createProvider({
+      provider: 'openai',
+      apiKey: 'bad-key',
+      model: 'm',
+    });
+
+    await expect(provider.execute('doc')).rejects.toThrow(/401/);
+  });
+
+  it('uses custom endpoint when provided', async () => {
+    const { createProvider } = await importFactory();
+
+    const provider = createProvider({
+      provider: 'openai',
+      apiKey: 'k',
+      model: 'm',
+      endpoint: 'https://custom.openai.example.com/v1/chat/completions',
+    });
+
+    await provider.execute('doc');
+
+    const [url] = fetchSpy.mock.calls[0];
+    expect(url).toBe('https://custom.openai.example.com/v1/chat/completions');
+  });
+
+  it('includes the document content in the user message', async () => {
+    const { createProvider } = await importFactory();
+
+    const provider = createProvider({
+      provider: 'openai',
+      apiKey: 'k',
+      model: 'm',
+    });
+
+    await provider.execute('# My Document\n\nSome content here.');
+
+    const body = JSON.parse(fetchSpy.mock.calls[0][1].body);
+    const userMessage = body.messages.find((m: any) => m.role === 'user');
+    expect(userMessage.content).toContain('# My Document');
   });
 });
 
