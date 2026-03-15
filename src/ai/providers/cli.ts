@@ -34,8 +34,14 @@ export class CliProvider implements AiProvider {
       );
     }
 
-    const parts = parse(this.command).filter((p): p is string => typeof p === 'string');
-    const [cmd, ...args] = parts;
+    const parsed = parse(this.command);
+    if (parsed.some(p => typeof p !== 'string')) {
+      throw new Error(
+        'CLI command contains shell operators (&&, |, ;, etc.) which are not supported. ' +
+        'Use a wrapper script instead.',
+      );
+    }
+    const [cmd, ...args] = parsed as string[];
 
     const payload = getSystemPrompt() + '\n\n---\n\n' + document;
 
