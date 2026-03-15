@@ -363,7 +363,7 @@ export class MdCompleat extends LitElement {
       extensions: [
         StarterKit,
         Markdown.configure({
-          html: true,
+          html: false,
           tightLists: true,
         }),
         Image,
