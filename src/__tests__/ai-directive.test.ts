@@ -221,6 +221,49 @@ describe('AiDirective node extension', () => {
       expect(aiNode.attrs.instruction).toBe('use <em> tags');
     });
 
+    it('block with angle brackets survives round-trip', async () => {
+      const input = '<ai>use <em> tags</ai>';
+      const el = await createElement({ content: input });
+      const output = (el as any).getMarkdown() as string;
+      expect(output.trim()).toBe(input);
+    });
+
+    it('block with angle brackets survives double round-trip', async () => {
+      const input = '<ai>use <em> tags</ai>';
+      const el = await createElement({ content: input });
+      const firstOutput = (el as any).getMarkdown() as string;
+
+      el.content = firstOutput.trim();
+      await el.updateComplete;
+      const secondOutput = (el as any).getMarkdown() as string;
+
+      expect(secondOutput.trim()).toBe(firstOutput.trim());
+    });
+
+    it('block with ampersand survives double round-trip', async () => {
+      const input = '<ai>A & B</ai>';
+      const el = await createElement({ content: input });
+      const firstOutput = (el as any).getMarkdown() as string;
+
+      el.content = firstOutput.trim();
+      await el.updateComplete;
+      const secondOutput = (el as any).getMarkdown() as string;
+
+      expect(secondOutput.trim()).toBe(firstOutput.trim());
+    });
+
+    it('block with literal ampersand entity survives double round-trip', async () => {
+      const input = '<ai>&amp;</ai>';
+      const el = await createElement({ content: input });
+      const firstOutput = (el as any).getMarkdown() as string;
+
+      el.content = firstOutput.trim();
+      await el.updateComplete;
+      const secondOutput = (el as any).getMarkdown() as string;
+
+      expect(secondOutput.trim()).toBe(firstOutput.trim());
+    });
+
     it('block with markdown-like content stores literally', async () => {
       const input = '<ai>add a **bold** heading</ai>';
       const el = await createElement({ content: input });
