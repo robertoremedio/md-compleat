@@ -148,4 +148,144 @@ describe('AiDirective node extension', () => {
       expect(markdown).toContain('<ai>expand this section</ai>');
     });
   });
+
+  // -------------------------------------------------------------------------
+  // Markdown round-trip: markdown → editor (via content attr) → markdown
+  // -------------------------------------------------------------------------
+  describe('markdown round-trip', () => {
+    it('self-closing variant survives markdown round-trip', async () => {
+      const input = '<ai instruction="summarize this" />';
+      const el = await createElement({ content: input });
+      const output = (el as any).getMarkdown() as string;
+      expect(output.trim()).toBe(input);
+    });
+
+    it('block variant survives markdown round-trip', async () => {
+      const input = '<ai>expand this section</ai>';
+      const el = await createElement({ content: input });
+      const output = (el as any).getMarkdown() as string;
+      expect(output.trim()).toBe(input);
+    });
+
+    it('double round-trip produces identical output', async () => {
+      const input = '<ai instruction="summarize this" />';
+      const el = await createElement({ content: input });
+      const firstOutput = (el as any).getMarkdown() as string;
+
+      // Feed serialized output back as new content
+      el.content = firstOutput.trim();
+      await el.updateComplete;
+      const secondOutput = (el as any).getMarkdown() as string;
+
+      expect(secondOutput.trim()).toBe(firstOutput.trim());
+    });
+
+    it('double round-trip for block variant produces identical output', async () => {
+      const input = '<ai>expand this section</ai>';
+      const el = await createElement({ content: input });
+      const firstOutput = (el as any).getMarkdown() as string;
+
+      el.content = firstOutput.trim();
+      await el.updateComplete;
+      const secondOutput = (el as any).getMarkdown() as string;
+
+      expect(secondOutput.trim()).toBe(firstOutput.trim());
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Special characters in instructions
+  // -------------------------------------------------------------------------
+  describe('markdown round-trip with special characters', () => {
+    it('self-closing with double quotes in instruction', async () => {
+      const input = '<ai instruction="say &quot;hello&quot;" />';
+      const el = await createElement({ content: input });
+      const output = (el as any).getMarkdown() as string;
+      expect(output.trim()).toBe(input);
+    });
+
+    it('self-closing with ampersand in instruction', async () => {
+      const input = '<ai instruction="A &amp; B" />';
+      const el = await createElement({ content: input });
+      const output = (el as any).getMarkdown() as string;
+      expect(output.trim()).toBe(input);
+    });
+
+    it('block with angle brackets in content', async () => {
+      const input = '<ai>use <em> tags</ai>';
+      const el = await createElement({ content: input });
+      const editor = (el as any)._editor!;
+      const json = editor.getJSON();
+      const aiNode = json.content?.find((n: any) => n.type === 'aiDirective');
+      expect(aiNode).toBeDefined();
+      expect(aiNode.attrs.instruction).toBe('use <em> tags');
+    });
+
+    it('block with markdown-like content stores literally', async () => {
+      const input = '<ai>add a **bold** heading</ai>';
+      const el = await createElement({ content: input });
+      const editor = (el as any)._editor!;
+      const json = editor.getJSON();
+      const aiNode = json.content?.find((n: any) => n.type === 'aiDirective');
+      expect(aiNode).toBeDefined();
+      // Content should be stored as literal string, not parsed as markdown
+      expect(aiNode.attrs.instruction).toBe('add a **bold** heading');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Structural edge cases
+  // -------------------------------------------------------------------------
+  describe('markdown round-trip structural edge cases', () => {
+    it('multi-line block content round-trips', async () => {
+      const input = '<ai>\nline one\nline two\n</ai>';
+      const el = await createElement({ content: input });
+      const editor = (el as any)._editor!;
+      const json = editor.getJSON();
+      const aiNode = json.content?.find((n: any) => n.type === 'aiDirective');
+      expect(aiNode).toBeDefined();
+      expect(aiNode.attrs.instruction).toContain('line one');
+      expect(aiNode.attrs.instruction).toContain('line two');
+
+      const output = (el as any).getMarkdown() as string;
+      expect(output).toContain('line one');
+      expect(output).toContain('line two');
+    });
+
+    it('ai tag adjacent to other markdown elements', async () => {
+      const input = 'Before paragraph\n\n<ai instruction="do something" />\n\nAfter paragraph';
+      const el = await createElement({ content: input });
+      const output = (el as any).getMarkdown() as string;
+      expect(output).toContain('Before paragraph');
+      expect(output).toContain('<ai instruction="do something" />');
+      expect(output).toContain('After paragraph');
+    });
+
+    it('empty self-closing variant round-trips via markdown', async () => {
+      const input = '<ai instruction="" />';
+      const el = await createElement({ content: input });
+      const output = (el as any).getMarkdown() as string;
+      expect(output.trim()).toBe(input);
+    });
+
+    it('empty block variant round-trips via markdown', async () => {
+      const input = '<ai></ai>';
+      const el = await createElement({ content: input });
+      const output = (el as any).getMarkdown() as string;
+      expect(output.trim()).toBe(input);
+    });
+
+    it('ai tags parse correctly despite html:false on Markdown extension', async () => {
+      // This tests that the custom markdown-it rule fires before html_block
+      // and works even when the Markdown extension has html: false
+      const input = '<ai instruction="test html false" />';
+      const el = await createElement({ content: input });
+      const editor = (el as any)._editor!;
+      const json = editor.getJSON();
+      const aiNode = json.content?.find((n: any) => n.type === 'aiDirective');
+      expect(aiNode).toBeDefined();
+      expect(aiNode.attrs.instruction).toBe('test html false');
+      expect(aiNode.attrs.variant).toBe('self-closing');
+    });
+  });
 });
