@@ -1,0 +1,25 @@
+package.json
+  aa001c7a952ea4aa 23
+vite.config.ts
+  aa001c7a952ea4aa 2,7,12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "d5e0df200c366f4aa15b1230cc7e5c27b221eb22",
+  "prompts": {
+    "aa001c7a952ea4aa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bd84dddd-9e42-45c5-a28b-9c94a05b23dc",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 4,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}
