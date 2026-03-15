@@ -1,0 +1,25 @@
+src/extensions/ai-directive.ts
+  ce3cee9c8e4dd3bc 25,27-29,33,42,53,97-98,112-113
+src/__tests__/ai-directive.test.ts
+  ce3cee9c8e4dd3bc 71,77-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "a62e2b69a21b23cd0fb7ba17fb7d75b62d5de225",
+  "prompts": {
+    "ce3cee9c8e4dd3bc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d091f402-86e6-4d76-b46d-2344bbeb0d0b",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 14,
+      "total_deletions": 13,
+      "accepted_lines": 14,
+      "overriden_lines": 0
+    }
+  }
+}
