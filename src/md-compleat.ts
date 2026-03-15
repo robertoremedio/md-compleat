@@ -74,6 +74,7 @@ export class MdCompleat extends LitElement {
     }
 
     .editor {
+      position: relative;
       font-family: var(--md-compleat-font-family);
       padding: 1rem;
       max-width: var(--md-compleat-max-width);

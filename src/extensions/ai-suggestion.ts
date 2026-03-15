@@ -1,4 +1,5 @@
 import { Extension } from '@tiptap/core';
+import { closeHistory } from '@tiptap/pm/history';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 
 const aiSuggestionKey = new PluginKey('aiSuggestion');
@@ -35,7 +36,6 @@ export const AiSuggestion = Extension.create({
       dropdown.style.left = `${coords.left - rect.left}px`;
       dropdown.style.top = `${coords.bottom - rect.top}px`;
 
-      root.style.position = root.style.position || 'relative';
       root.appendChild(dropdown);
     }
 
@@ -49,10 +49,17 @@ export const AiSuggestion = Extension.create({
 
     function accept() {
       if (triggerFrom < 0) return;
+      // Close history group so accept is a single undoable step
+      editor.view.dispatch(closeHistory(editor.view.state.tr));
       const { state } = editor.view;
-      const tr = state.tr.delete(triggerFrom, state.selection.from);
+      const { $from } = state.selection;
+      // Replace the entire paragraph containing "/ai" with an aiDirective block
+      const blockFrom = $from.before($from.depth);
+      const blockTo = $from.after($from.depth);
+      const nodeType = state.schema.nodes.aiDirective;
+      const node = nodeType.create({ instruction: '', variant: 'self-closing' });
+      const tr = state.tr.replaceWith(blockFrom, blockTo, node);
       editor.view.dispatch(tr);
-      editor.commands.insertAiDirective({ instruction: '' });
       hide();
     }
 
