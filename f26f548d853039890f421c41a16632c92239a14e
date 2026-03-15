@@ -1,0 +1,23 @@
+src/__tests__/ai-suggestion-single-dispatch.test.ts
+  f1bc272923765d10 1-112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "f26f548d853039890f421c41a16632c92239a14e",
+  "prompts": {
+    "f1bc272923765d10": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d291e45c-a0e3-4d38-b38b-ba56e10a9cc2",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 112,
+      "total_deletions": 0,
+      "accepted_lines": 112,
+      "overriden_lines": 0
+    }
+  }
+}
