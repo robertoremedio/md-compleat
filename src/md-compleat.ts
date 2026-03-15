@@ -206,7 +206,7 @@ export class MdCompleat extends LitElement {
       height: auto;
     }
 
-`;
+  `;
 
   @property({ type: String }) content = '';
 
