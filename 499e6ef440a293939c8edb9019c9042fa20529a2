@@ -1,0 +1,23 @@
+src/__tests__/wysiwyg-polish.test.ts
+  c7c871907c7e974f 1-257
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "499e6ef440a293939c8edb9019c9042fa20529a2",
+  "prompts": {
+    "c7c871907c7e974f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6a483edb-c276-490b-a1cb-9d8eb44835c1",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 422,
+      "total_deletions": 165,
+      "accepted_lines": 257,
+      "overriden_lines": 0
+    }
+  }
+}
