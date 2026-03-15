@@ -927,4 +927,70 @@ describe('MdCompleat AI attributes', () => {
     const el = await createElement({ 'ai-proxy-headers': headers });
     expect((el as any).aiProxyHeaders).toBe(headers);
   });
+
+  // -------------------------------------------------------------------------
+  // Custom provider property (aiProvider) and getActiveProvider()
+  // -------------------------------------------------------------------------
+
+  it('returns custom provider from getActiveProvider() when aiProvider is set', async () => {
+    const el = await createElement();
+    const customProvider = { execute: vi.fn().mockResolvedValue('custom-result') };
+    (el as any).aiProvider = customProvider;
+    await el.updateComplete;
+
+    const active = (el as any).getActiveProvider();
+    expect(active).toBe(customProvider);
+  });
+
+  it('aiProvider takes precedence over attribute-based config', async () => {
+    const el = await createElement({
+      'ai-provider': 'anthropic',
+      'ai-api-key': 'test-key',
+      'ai-model': 'claude-sonnet-4-20250514',
+    });
+    const customProvider = { execute: vi.fn().mockResolvedValue('custom-result') };
+    (el as any).aiProvider = customProvider;
+    await el.updateComplete;
+
+    const active = (el as any).getActiveProvider();
+    expect(active).toBe(customProvider);
+  });
+
+  it('falls back to createProvider() when aiProvider is null', async () => {
+    const el = await createElement({
+      'ai-provider': 'anthropic',
+      'ai-api-key': 'test-key',
+      'ai-model': 'claude-sonnet-4-20250514',
+    });
+
+    const active = (el as any).getActiveProvider();
+    // Should return a factory-created provider (not null)
+    expect(active).toBeDefined();
+    expect(active).not.toBeNull();
+    // Verify it's not just the null aiProvider — it should have an execute method from the factory
+    expect(typeof active.execute).toBe('function');
+  });
+
+  it('restores factory fallback when aiProvider is set back to null', async () => {
+    const el = await createElement({
+      'ai-provider': 'anthropic',
+      'ai-api-key': 'test-key',
+      'ai-model': 'claude-sonnet-4-20250514',
+    });
+    const customProvider = { execute: vi.fn().mockResolvedValue('custom-result') };
+
+    // Set custom provider
+    (el as any).aiProvider = customProvider;
+    await el.updateComplete;
+    expect((el as any).getActiveProvider()).toBe(customProvider);
+
+    // Reset to null
+    (el as any).aiProvider = null;
+    await el.updateComplete;
+
+    const active = (el as any).getActiveProvider();
+    expect(active).not.toBe(customProvider);
+    expect(active).toBeDefined();
+    expect(typeof active.execute).toBe('function');
+  });
 });
