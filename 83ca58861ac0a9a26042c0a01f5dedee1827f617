@@ -1,0 +1,23 @@
+src/__tests__/ai-directive-chip.test.ts
+  a2315724c051fdfc 1-457
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "83ca58861ac0a9a26042c0a01f5dedee1827f617",
+  "prompts": {
+    "a2315724c051fdfc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7a9ed7a1-e200-4a53-ad05-3152c2c705b7",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 457,
+      "total_deletions": 0,
+      "accepted_lines": 457,
+      "overriden_lines": 0
+    }
+  }
+}
