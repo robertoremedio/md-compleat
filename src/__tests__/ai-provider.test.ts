@@ -352,13 +352,223 @@ describe('HttpProvider with OpenAI adapter', () => {
 // ---------------------------------------------------------------------------
 // CliProvider
 // ---------------------------------------------------------------------------
+
+async function importCliProviderNew() {
+  return import('../ai/providers/cli.js');
+}
+
 describe('CliProvider', () => {
-  it('throws "not supported in browser" error from execute()', async () => {
-    const { createProvider } = await importFactory();
-    const provider = createProvider({ provider: 'cli', cliCommand: 'echo' });
+  // -- Constructor validation ------------------------------------------------
+
+  it('throws when cliCommand is missing', async () => {
+    const { CliProvider } = await importCliProviderNew();
+    expect(() => new CliProvider({})).toThrow();
+  });
+
+  it('throws when cliCommand is empty string', async () => {
+    const { CliProvider } = await importCliProviderNew();
+    expect(() => new CliProvider({ cliCommand: '' })).toThrow();
+  });
+
+  it('constructs successfully with a valid cliCommand', async () => {
+    const { CliProvider } = await importCliProviderNew();
+    const provider = new CliProvider({ cliCommand: 'my-llm' });
+    expect(provider).toBeDefined();
+  });
+
+  // -- Environment detection -------------------------------------------------
+
+  it('throws descriptive error when child_process is not available', async () => {
+    // In jsdom (browser-like), dynamic import('child_process') should fail.
+    // The provider should catch this and throw a clear error.
+    const { CliProvider } = await importCliProviderNew();
+    const provider = new CliProvider({ cliCommand: 'my-llm' });
     await expect(provider.execute('doc')).rejects.toThrow(
-      /not supported in browser/i,
+      /child_process not available/i,
     );
+  });
+
+  // -- Command spawning and stdin/stdout piping ------------------------------
+
+  describe('with mocked child_process', () => {
+    let spawnMock: ReturnType<typeof vi.fn>;
+    let mockStdin: { write: ReturnType<typeof vi.fn>; end: ReturnType<typeof vi.fn> };
+    let mockStdout: { on: ReturnType<typeof vi.fn> };
+    let mockStderr: { on: ReturnType<typeof vi.fn> };
+    let mockChild: {
+      stdin: typeof mockStdin;
+      stdout: typeof mockStdout;
+      stderr: typeof mockStderr;
+      on: ReturnType<typeof vi.fn>;
+      kill: ReturnType<typeof vi.fn>;
+    };
+
+    beforeEach(() => {
+      mockStdin = { write: vi.fn(), end: vi.fn() };
+      mockStdout = { on: vi.fn() };
+      mockStderr = { on: vi.fn() };
+      mockChild = {
+        stdin: mockStdin,
+        stdout: mockStdout,
+        stderr: mockStderr,
+        on: vi.fn(),
+        kill: vi.fn(),
+      };
+      spawnMock = vi.fn().mockReturnValue(mockChild);
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    // Helper: resolve the child process with data
+    function simulateSuccess(stdout: string) {
+      // When stdout.on('data', cb) is called, capture the callback and invoke it
+      mockStdout.on.mockImplementation((event: string, cb: (data: Buffer) => void) => {
+        if (event === 'data') cb(Buffer.from(stdout));
+      });
+      mockStderr.on.mockImplementation((_event: string, _cb: (data: Buffer) => void) => {
+        // no stderr
+      });
+      // When child.on('close', cb) is called, invoke with exit code 0
+      mockChild.on.mockImplementation((event: string, cb: (code: number) => void) => {
+        if (event === 'close') cb(0);
+      });
+    }
+
+    function simulateFailure(exitCode: number, stderr: string) {
+      mockStdout.on.mockImplementation((_event: string, _cb: (data: Buffer) => void) => {
+        // no stdout
+      });
+      mockStderr.on.mockImplementation((event: string, cb: (data: Buffer) => void) => {
+        if (event === 'data') cb(Buffer.from(stderr));
+      });
+      mockChild.on.mockImplementation((event: string, cb: (code: number) => void) => {
+        if (event === 'close') cb(exitCode);
+      });
+    }
+
+    function simulateProcessError(errorMessage: string) {
+      mockStdout.on.mockImplementation(() => {});
+      mockStderr.on.mockImplementation(() => {});
+      mockChild.on.mockImplementation((event: string, cb: (arg: any) => void) => {
+        if (event === 'error') cb(new Error(errorMessage));
+      });
+    }
+
+    async function createMockedProvider(cliCommand: string) {
+      // Mock the dynamic import of child_process
+      vi.doMock('child_process', () => ({ spawn: spawnMock }));
+      // Must re-import after mocking
+      const { CliProvider } = await import('../ai/providers/cli.js');
+      return new CliProvider({ cliCommand });
+    }
+
+    it('spawns the correct command with args split on whitespace', async () => {
+      simulateSuccess('output');
+      const provider = await createMockedProvider('my-llm --format md');
+
+      await provider.execute('doc');
+
+      expect(spawnMock).toHaveBeenCalledWith(
+        'my-llm',
+        ['--format', 'md'],
+        expect.objectContaining({ stdio: ['pipe', 'pipe', 'pipe'] }),
+      );
+    });
+
+    it('writes system prompt and document to stdin', async () => {
+      simulateSuccess('output');
+      const provider = await createMockedProvider('my-llm');
+      const { getSystemPrompt } = await importPrompt();
+
+      await provider.execute('# Hello World');
+
+      const writtenData = mockStdin.write.mock.calls.map((c: any[]) => c[0]).join('');
+      expect(writtenData).toContain(getSystemPrompt());
+      expect(writtenData).toContain('# Hello World');
+      expect(writtenData).toContain('---'); // separator between system prompt and document
+      expect(mockStdin.end).toHaveBeenCalled();
+    });
+
+    it('returns stdout on successful exit (code 0)', async () => {
+      simulateSuccess('AI generated response');
+      const provider = await createMockedProvider('my-llm');
+
+      const result = await provider.execute('doc');
+      expect(result).toBe('AI generated response');
+    });
+
+    it('rejects with stderr content on non-zero exit code', async () => {
+      simulateFailure(1, 'command failed: invalid input');
+      const provider = await createMockedProvider('my-llm');
+
+      await expect(provider.execute('doc')).rejects.toThrow(/command failed/i);
+    });
+
+    it('includes exit code in error on non-zero exit', async () => {
+      simulateFailure(127, 'not found');
+      const provider = await createMockedProvider('my-llm');
+
+      await expect(provider.execute('doc')).rejects.toThrow(/127/);
+    });
+
+    it('rejects on process error event (e.g. command not found)', async () => {
+      simulateProcessError('spawn my-llm ENOENT');
+      const provider = await createMockedProvider('my-llm');
+
+      await expect(provider.execute('doc')).rejects.toThrow(/ENOENT/);
+    });
+
+    it('kills child process when AbortSignal fires', async () => {
+      // Don't resolve the process — it should be killed
+      mockStdout.on.mockImplementation(() => {});
+      mockStderr.on.mockImplementation(() => {});
+      mockChild.on.mockImplementation(() => {});
+
+      const provider = await createMockedProvider('my-llm');
+      const controller = new AbortController();
+
+      const promise = provider.execute('doc', controller.signal);
+      controller.abort();
+
+      // The promise should reject
+      await expect(promise).rejects.toThrow();
+      // And the child process should be killed
+      expect(mockChild.kill).toHaveBeenCalled();
+    });
+
+    it('rejects immediately if signal is already aborted', async () => {
+      const provider = await createMockedProvider('my-llm');
+      const controller = new AbortController();
+      controller.abort();
+
+      await expect(provider.execute('doc', controller.signal)).rejects.toThrow();
+      // Should NOT have spawned a process
+      expect(spawnMock).not.toHaveBeenCalled();
+    });
+
+    it('handles command with single word (no args)', async () => {
+      simulateSuccess('output');
+      const provider = await createMockedProvider('llm');
+
+      await provider.execute('doc');
+
+      expect(spawnMock).toHaveBeenCalledWith(
+        'llm',
+        [],
+        expect.objectContaining({ stdio: ['pipe', 'pipe', 'pipe'] }),
+      );
+    });
+  });
+
+  // -- Factory integration ---------------------------------------------------
+
+  it('factory routes provider "cli" to CliProvider', async () => {
+    const { createProvider } = await importFactory();
+    const { CliProvider } = await importCliProviderNew();
+    const provider = createProvider({ provider: 'cli', cliCommand: 'echo' });
+    expect(provider).toBeInstanceOf(CliProvider);
   });
 });
 
