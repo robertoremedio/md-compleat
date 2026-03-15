@@ -1,3 +1,4 @@
+import { parse } from 'shell-quote';
 import type { AiProvider } from '../provider.js';
 import { getSystemPrompt } from '../prompt.js';
 
@@ -33,13 +34,27 @@ export class CliProvider implements AiProvider {
       );
     }
 
-    const parts = this.command.split(/\s+/);
+    const parts = parse(this.command).filter((p): p is string => typeof p === 'string');
     const [cmd, ...args] = parts;
 
     const payload = getSystemPrompt() + '\n\n---\n\n' + document;
 
     return new Promise<string>((resolve, reject) => {
       const child = spawn(cmd, args, { stdio: ['pipe', 'pipe', 'pipe'] });
+
+      let settled = false;
+      const safeResolve = (val: string) => { if (!settled) { settled = true; resolve(val); } };
+      const safeReject = (err: Error) => { if (!settled) { settled = true; reject(err); } };
+
+      const cleanup = () => {
+        if (signal) signal.removeEventListener('abort', onAbort);
+      };
+
+      const onAbort = () => {
+        child.kill();
+        safeReject(new Error('Aborted'));
+        cleanup();
+      };
 
       const stdoutChunks: Buffer[] = [];
       const stderrChunks: Buffer[] = [];
@@ -53,27 +68,26 @@ export class CliProvider implements AiProvider {
       });
 
       child.on('error', (err: Error) => {
-        reject(err);
+        safeReject(err);
+        cleanup();
       });
 
       child.on('close', (code: number) => {
         if (code === 0) {
-          resolve(Buffer.concat(stdoutChunks).toString());
+          safeResolve(Buffer.concat(stdoutChunks).toString());
         } else {
           const stderr = Buffer.concat(stderrChunks).toString();
-          reject(
+          safeReject(
             new Error(
               `CLI command exited with code ${code}: ${stderr}`,
             ),
           );
         }
+        cleanup();
       });
 
       if (signal) {
-        signal.addEventListener('abort', () => {
-          child.kill();
-          reject(new Error('Aborted'));
-        });
+        signal.addEventListener('abort', onAbort);
       }
 
       child.stdin.write(payload);
