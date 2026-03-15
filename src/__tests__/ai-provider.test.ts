@@ -379,13 +379,16 @@ describe('CliProvider', () => {
   // -- Environment detection -------------------------------------------------
 
   it('throws descriptive error when child_process is not available', async () => {
-    // In jsdom (browser-like), dynamic import('child_process') should fail.
-    // The provider should catch this and throw a clear error.
-    const { CliProvider } = await importCliProviderNew();
+    // Mock child_process to simulate a browser environment where it's unavailable.
+    vi.doMock('child_process', () => {
+      throw new Error('Cannot find module');
+    });
+    const { CliProvider } = await import('../ai/providers/cli.js');
     const provider = new CliProvider({ cliCommand: 'my-llm' });
     await expect(provider.execute('doc')).rejects.toThrow(
       /child_process not available/i,
     );
+    vi.restoreAllMocks();
   });
 
   // -- Command spawning and stdin/stdout piping ------------------------------
@@ -530,6 +533,9 @@ describe('CliProvider', () => {
       const controller = new AbortController();
 
       const promise = provider.execute('doc', controller.signal);
+      // Yield microtasks so the dynamic import('child_process') inside
+      // execute() resolves and the abort listener is registered.
+      await new Promise((r) => setTimeout(r, 0));
       controller.abort();
 
       // The promise should reject

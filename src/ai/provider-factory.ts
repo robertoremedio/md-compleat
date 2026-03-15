@@ -1,6 +1,6 @@
 import type { AiProvider } from './provider.js';
 import { HttpProvider, anthropicAdapter, openaiAdapter } from './http-provider.js';
-import { CliProvider } from './cli-provider.js';
+import { CliProvider } from './providers/cli.js';
 import { ProxyProvider } from './providers/proxy.js';
 
 export function createProvider(config: {
