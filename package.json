@@ -20,7 +20,7 @@
     "build": "vite build && tsc",
     "test": "vitest run --passWithNoTests"
   },
-  "dependencies": {
+  "peerDependencies": {
     "@tiptap/core": "^3.20.2",
     "@tiptap/pm": "^3.20.2",
     "@tiptap/starter-kit": "^3.20.2",
