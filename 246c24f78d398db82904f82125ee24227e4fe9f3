@@ -1,0 +1,21 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "246c24f78d398db82904f82125ee24227e4fe9f3",
+  "prompts": {
+    "db99a4157a6bedb5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "04525bef-39bf-45a9-86b2-9bd41ca58b3c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}
