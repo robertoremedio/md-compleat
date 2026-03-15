@@ -43,8 +43,12 @@ export class MdCompleat extends LitElement {
   }
 
   override updated(changedProperties: Map<string, unknown>) {
-    if (changedProperties.has('content') && !this._updatingFromEditor && this._editor) {
-      this._editor.commands.setContent(this.content, { emitUpdate: false });
+    if (changedProperties.has('content') && this._editor) {
+      if (this._updatingFromEditor) {
+        this._updatingFromEditor = false;
+      } else {
+        this._editor.commands.setContent(this.content, { emitUpdate: false });
+      }
     }
   }
 
@@ -80,7 +84,6 @@ export class MdCompleat extends LitElement {
         const newContent = editor.getHTML();
         this._updatingFromEditor = true;
         this.content = newContent;
-        this._updatingFromEditor = false;
         this.dispatchEvent(
           new CustomEvent('content-changed', {
             detail: { content: newContent },
