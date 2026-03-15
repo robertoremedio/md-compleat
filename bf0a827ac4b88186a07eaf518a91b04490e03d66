@@ -1,0 +1,31 @@
+src/__tests__/setup.ts
+  0ec41de3c48a4b33 1
+src/md-compleat.ts
+  0ec41de3c48a4b33 5-10,77-81,89-98,103
+vitest.config.ts
+  0ec41de3c48a4b33 6
+dev/index.html
+  0ec41de3c48a4b33 11-23
+vite.config.ts
+  0ec41de3c48a4b33 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "bf0a827ac4b88186a07eaf518a91b04490e03d66",
+  "prompts": {
+    "0ec41de3c48a4b33": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "437378dd-c73a-4a37-ba76-7d4215810518",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 54,
+      "total_deletions": 21,
+      "accepted_lines": 38,
+      "overriden_lines": 0
+    }
+  }
+}
