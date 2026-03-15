@@ -15,6 +15,10 @@ async function importCliProvider() {
   return import('../ai/cli-provider.js');
 }
 
+async function importProxyProvider() {
+  return import('../ai/providers/proxy.js');
+}
+
 async function importPrompt() {
   return import('../ai/prompt.js');
 }
@@ -377,6 +381,177 @@ describe('getSystemPrompt', () => {
 });
 
 // ---------------------------------------------------------------------------
+// ProxyProvider
+// ---------------------------------------------------------------------------
+describe('ProxyProvider', () => {
+  let fetchSpy: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchSpy = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ document: 'resolved-markdown' }),
+    });
+    vi.stubGlobal('fetch', fetchSpy);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('sends POST to endpoint with correct body and Content-Type', async () => {
+    const { ProxyProvider } = await importProxyProvider();
+
+    const provider = new ProxyProvider({
+      endpoint: 'https://my-proxy.example.com/ai',
+    });
+
+    await provider.execute('# My Document');
+
+    expect(fetchSpy).toHaveBeenCalledOnce();
+
+    const [url, init] = fetchSpy.mock.calls[0];
+
+    expect(url).toBe('https://my-proxy.example.com/ai');
+    expect(init.method).toBe('POST');
+    expect(init.headers).toMatchObject({
+      'Content-Type': 'application/json',
+    });
+
+    const body = JSON.parse(init.body);
+    expect(body).toEqual({
+      document: '# My Document',
+      format: 'markdown',
+    });
+  });
+
+  it('returns the document field from the response', async () => {
+    const { ProxyProvider } = await importProxyProvider();
+
+    const provider = new ProxyProvider({
+      endpoint: 'https://my-proxy.example.com/ai',
+    });
+
+    const result = await provider.execute('doc');
+    expect(result).toBe('resolved-markdown');
+  });
+
+  it('forwards AbortSignal to fetch', async () => {
+    const { ProxyProvider } = await importProxyProvider();
+
+    const provider = new ProxyProvider({
+      endpoint: 'https://my-proxy.example.com/ai',
+    });
+
+    const controller = new AbortController();
+    await provider.execute('doc', controller.signal);
+
+    const [, init] = fetchSpy.mock.calls[0];
+    expect(init.signal).toBe(controller.signal);
+  });
+
+  it('merges custom headers from proxyHeaders JSON', async () => {
+    const { ProxyProvider } = await importProxyProvider();
+
+    const provider = new ProxyProvider({
+      endpoint: 'https://my-proxy.example.com/ai',
+      proxyHeaders: JSON.stringify({
+        Authorization: 'Bearer my-token',
+        'X-Custom': 'value',
+      }),
+    });
+
+    await provider.execute('doc');
+
+    const [, init] = fetchSpy.mock.calls[0];
+    expect(init.headers).toMatchObject({
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer my-token',
+      'X-Custom': 'value',
+    });
+  });
+
+  it('throws on non-ok response with status info', async () => {
+    fetchSpy.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      statusText: 'Bad Gateway',
+    });
+
+    const { ProxyProvider } = await importProxyProvider();
+
+    const provider = new ProxyProvider({
+      endpoint: 'https://my-proxy.example.com/ai',
+    });
+
+    await expect(provider.execute('doc')).rejects.toThrow(/502/);
+  });
+
+  it('throws when response JSON is missing document field', async () => {
+    fetchSpy.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ text: 'wrong field' }),
+    });
+
+    const { ProxyProvider } = await importProxyProvider();
+
+    const provider = new ProxyProvider({
+      endpoint: 'https://my-proxy.example.com/ai',
+    });
+
+    await expect(provider.execute('doc')).rejects.toThrow(/document/i);
+  });
+
+  it('throws when endpoint is missing from config', async () => {
+    const { ProxyProvider } = await importProxyProvider();
+
+    expect(() => new ProxyProvider({})).toThrow();
+  });
+
+  it('throws when proxyHeaders is invalid JSON', async () => {
+    const { ProxyProvider } = await importProxyProvider();
+
+    expect(
+      () =>
+        new ProxyProvider({
+          endpoint: 'https://my-proxy.example.com/ai',
+          proxyHeaders: 'not-valid-json',
+        }),
+    ).toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Provider Factory — proxy
+// ---------------------------------------------------------------------------
+describe('createProvider with proxy', () => {
+  let fetchSpy: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchSpy = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ document: 'result' }),
+    });
+    vi.stubGlobal('fetch', fetchSpy);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('returns a ProxyProvider for provider "proxy"', async () => {
+    const { createProvider } = await importFactory();
+    const { ProxyProvider } = await importProxyProvider();
+
+    const provider = createProvider({
+      provider: 'proxy',
+      endpoint: 'https://my-proxy.example.com/ai',
+    });
+
+    expect(provider).toBeInstanceOf(ProxyProvider);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Component attributes (DOM reflection)
 // ---------------------------------------------------------------------------
 describe('MdCompleat AI attributes', () => {
@@ -424,5 +599,11 @@ describe('MdCompleat AI attributes', () => {
   it('reflects ai-cli-command attribute to aiCliCommand property', async () => {
     const el = await createElement({ 'ai-cli-command': 'my-llm-cli' });
     expect((el as any).aiCliCommand).toBe('my-llm-cli');
+  });
+
+  it('reflects ai-proxy-headers attribute to aiProxyHeaders property', async () => {
+    const headers = JSON.stringify({ Authorization: 'Bearer tok' });
+    const el = await createElement({ 'ai-proxy-headers': headers });
+    expect((el as any).aiProxyHeaders).toBe(headers);
   });
 });
