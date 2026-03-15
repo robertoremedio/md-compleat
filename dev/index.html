@@ -5,22 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>md-compleat dev</title>
     <script type="module" src="../src/index.ts"></script>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #333;
+      }
+      h1 { margin-bottom: 0.5rem; }
+      p.info { color: #666; font-size: 0.9em; margin-top: 0; }
+      .demo-constrained {
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        margin: 1.5rem 0;
+      }
+      .demo-constrained md-compleat {
+        --md-compleat-max-height: 400px;
+      }
+      kbd {
+        background: #eee;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        padding: 0.1em 0.4em;
+        font-size: 0.85em;
+      }
+    </style>
   </head>
   <body>
     <h1>md-compleat</h1>
-    <md-compleat content="# Hello from md-compleat
+    <p class="info">
+      Shortcuts: <kbd>Ctrl+B</kbd> bold, <kbd>Ctrl+I</kbd> italic,
+      <kbd>Ctrl+K</kbd> link &middot;
+      Input rules: <code># </code> heading, <code>- </code> list,
+      <code>1. </code> ordered list, <code>``` </code> code block,
+      <code>&gt; </code> blockquote
+    </p>
 
-This is a **markdown** editor with *WYSIWYG* editing.
+    <div class="demo-constrained">
+      <md-compleat content="# Heading 1
 
-## Features
+## Heading 2
 
-- Bold and italic text
-- [Links](https://example.com)
-- Code blocks
-- Lists and blockquotes
+### Heading 3
 
-> Try editing this content!
+Paragraph with **bold**, *italic*, and `inline code`. Here is a [link](https://example.com).
+
+> This is a blockquote with some meaningful text inside it.
+> It can span multiple lines.
+
+- First item
+- Second item
+- Third item
+
+1. Ordered one
+2. Ordered two
+3. Ordered three
+
+```
+function hello() {
+  console.log('Hello, world!');
+}
+```
+
+---
+
+| Header 1 | Header 2 | Header 3 |
+|----------|----------|----------|
+| Cell 1   | Cell 2   | Cell 3   |
+| Cell 4   | Cell 5   | Cell 6   |
+
+Try typing `# ` at the start of a new line to create a heading, or `> ` for a blockquote.
 "></md-compleat>
+    </div>
+
     <script type="module">
       document.querySelector('md-compleat').addEventListener('content-changed', (e) => {
         console.log('content-changed:', e.detail.content);

@@ -1,25 +1,82 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { Editor } from '@tiptap/core';
+import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from 'tiptap-markdown';
 import Image from '@tiptap/extension-image';
+import Link from '@tiptap/extension-link';
 import { Table } from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 
+const LinkShortcut = Extension.create({
+  name: 'linkShortcut',
+
+  addKeyboardShortcuts() {
+    return {
+      'Mod-k': ({ editor }) => {
+        const { from, to } = editor.state.selection;
+        const hasLink = editor.isActive('link');
+
+        if (hasLink && from === to) {
+          // Cursor inside a link with no selection — prompt to edit or remove
+          const existingHref =
+            editor.getAttributes('link').href ?? '';
+          const url = window.prompt('Edit URL (clear to remove):', existingHref);
+          if (url === null) return true; // cancelled
+          if (url === '') {
+            editor.chain().focus().extendMarkRange('link').unsetLink().run();
+          } else {
+            editor
+              .chain()
+              .focus()
+              .extendMarkRange('link')
+              .setLink({ href: url })
+              .run();
+          }
+          return true;
+        }
+
+        const url = window.prompt('Enter URL:');
+        if (url === null || url === '') return true;
+        editor.chain().focus().setLink({ href: url }).run();
+        return true;
+      },
+    };
+  },
+});
+
 @customElement('md-compleat')
 export class MdCompleat extends LitElement {
   static override styles = css`
     :host {
+      --md-compleat-font-family: system-ui, -apple-system, sans-serif;
+      --md-compleat-font-mono: ui-monospace, 'SFMono-Regular', 'SF Mono',
+        Menlo, Consolas, monospace;
+      --md-compleat-max-width: 65ch;
+      --md-compleat-max-height: none;
+      --md-compleat-focus-outline: 2px solid highlight;
+      --md-compleat-code-bg: rgba(0, 0, 0, 0.06);
+      --md-compleat-blockquote-border: 3px solid rgba(0, 0, 0, 0.2);
+      --md-compleat-hr-color: rgba(0, 0, 0, 0.15);
+      --md-compleat-table-border: 1px solid rgba(0, 0, 0, 0.15);
+      --md-compleat-link-color: #1a6be0;
       display: block;
     }
 
+    :host(:focus-within) {
+      outline: var(--md-compleat-focus-outline);
+      outline-offset: -1px;
+      border-radius: 2px;
+    }
+
     .editor {
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family: var(--md-compleat-font-family);
       padding: 1rem;
-      max-width: 65ch;
+      max-width: var(--md-compleat-max-width);
+      max-height: var(--md-compleat-max-height);
+      overflow-y: auto;
     }
 
     .ProseMirror {
@@ -32,6 +89,129 @@ export class MdCompleat extends LitElement {
 
     .ProseMirror > :first-child {
       margin-top: 0;
+    }
+
+    /* Headings */
+    .ProseMirror h1 {
+      font-size: 2em;
+      font-weight: 700;
+      margin: 0.8em 0 0.4em;
+      line-height: 1.2;
+    }
+
+    .ProseMirror h2 {
+      font-size: 1.5em;
+      font-weight: 600;
+      margin: 0.7em 0 0.35em;
+      line-height: 1.25;
+    }
+
+    .ProseMirror h3 {
+      font-size: 1.25em;
+      font-weight: 600;
+      margin: 0.6em 0 0.3em;
+      line-height: 1.3;
+    }
+
+    .ProseMirror h4,
+    .ProseMirror h5,
+    .ProseMirror h6 {
+      font-size: 1em;
+      font-weight: 600;
+      margin: 0.5em 0 0.25em;
+    }
+
+    /* Code blocks */
+    .ProseMirror pre {
+      background: var(--md-compleat-code-bg);
+      border-radius: 4px;
+      padding: 0.75em 1em;
+      overflow-x: auto;
+      margin: 0.75em 0;
+    }
+
+    .ProseMirror pre > code {
+      font-family: var(--md-compleat-font-mono);
+      font-size: 0.9em;
+      background: none;
+      padding: 0;
+      border-radius: 0;
+    }
+
+    /* Inline code */
+    .ProseMirror :not(pre) > code {
+      font-family: var(--md-compleat-font-mono);
+      font-size: 0.9em;
+      background: var(--md-compleat-code-bg);
+      padding: 0.15em 0.35em;
+      border-radius: 3px;
+    }
+
+    /* Blockquotes */
+    .ProseMirror blockquote {
+      border-left: var(--md-compleat-blockquote-border);
+      margin: 0.75em 0;
+      padding-left: 1em;
+      color: rgba(0, 0, 0, 0.65);
+    }
+
+    /* Lists */
+    .ProseMirror ul,
+    .ProseMirror ol {
+      padding-left: 1.5em;
+      margin: 0.5em 0;
+    }
+
+    .ProseMirror li {
+      margin: 0.2em 0;
+    }
+
+    /* Tables */
+    .ProseMirror table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 0.75em 0;
+    }
+
+    .ProseMirror th,
+    .ProseMirror td {
+      border: var(--md-compleat-table-border);
+      padding: 0.4em 0.6em;
+      text-align: left;
+    }
+
+    .ProseMirror th {
+      font-weight: 600;
+      background: var(--md-compleat-code-bg);
+    }
+
+    /* Horizontal rules */
+    .ProseMirror hr {
+      border: none;
+      border-top: 2px solid var(--md-compleat-hr-color);
+      margin: 1.5em 0;
+    }
+
+    /* Links */
+    .ProseMirror a {
+      color: var(--md-compleat-link-color);
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    /* Images */
+    .ProseMirror img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Placeholder / empty state */
+    .ProseMirror p.is-empty::before {
+      content: attr(data-placeholder);
+      color: rgba(0, 0, 0, 0.35);
+      pointer-events: none;
+      float: left;
+      height: 0;
     }
   `;
 
@@ -92,6 +272,10 @@ export class MdCompleat extends LitElement {
           tightLists: true,
         }),
         Image,
+        Link.configure({
+          openOnClick: false,
+        }),
+        LinkShortcut,
         Table,
         TableRow,
         TableHeader,
