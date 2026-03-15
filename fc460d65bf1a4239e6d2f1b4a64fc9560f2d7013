@@ -1,0 +1,23 @@
+src/__tests__/ai-execute.test.ts
+  ac1f99d8f3d026c0 1-322
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "fc460d65bf1a4239e6d2f1b4a64fc9560f2d7013",
+  "prompts": {
+    "ac1f99d8f3d026c0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "78698c99-34b5-4b43-aee0-7f189203834c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 322,
+      "total_deletions": 0,
+      "accepted_lines": 322,
+      "overriden_lines": 0
+    }
+  }
+}
