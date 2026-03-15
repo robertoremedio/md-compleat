@@ -1,0 +1,25 @@
+src/extensions/ai-suggestion.ts
+  f65295cafeced6f5 59-60
+src/__tests__/ai-suggestion-single-dispatch.test.ts
+  f65295cafeced6f5 49,52-56,79-83,109,111-113,117-118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "7c207103660fe96762d852ee860e6d5fec05b10f",
+  "prompts": {
+    "f65295cafeced6f5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "55988107-0724-4c73-b75e-e5909f6df418",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 20,
+      "total_deletions": 11,
+      "accepted_lines": 19,
+      "overriden_lines": 0
+    }
+  }
+}
