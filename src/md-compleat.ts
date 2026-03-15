@@ -11,6 +11,7 @@ import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import { AiDirective } from './extensions/ai-directive.js';
 import { AiSuggestion } from './extensions/ai-suggestion.js';
+import { AiExecute } from './extensions/ai-execute.js';
 import type { AiProvider } from './ai/provider.js';
 import { createProvider } from './ai/provider-factory.js';
 
@@ -271,6 +272,7 @@ export class MdCompleat extends LitElement {
 
   @property({ type: String }) content = '';
   @property({ type: String, attribute: 'ai-shortcut' }) aiShortcut = '';
+  @property({ type: String, attribute: 'ai-execute-shortcut' }) aiExecuteShortcut = '';
   @property({ type: String, attribute: 'ai-provider' }) aiProviderName = '';
   @property({ type: String, attribute: 'ai-model' }) aiModel = '';
   @property({ type: String, attribute: 'ai-api-key' }) aiApiKey = '';
@@ -343,6 +345,7 @@ export class MdCompleat extends LitElement {
 
   override disconnectedCallback() {
     super.disconnectedCallback();
+    this._editor?.storage.aiExecute?.abortController?.abort();
     this._editor?.destroy();
     this._editor = null;
   }
@@ -360,7 +363,7 @@ export class MdCompleat extends LitElement {
       extensions: [
         StarterKit,
         Markdown.configure({
-          html: false,
+          html: true,
           tightLists: true,
         }),
         Image,
@@ -377,6 +380,10 @@ export class MdCompleat extends LitElement {
           ...(this.aiShortcut ? { shortcut: this.aiShortcut } : {}),
         }),
         AiSuggestion,
+        AiExecute.configure({
+          ...(this.aiExecuteShortcut ? { shortcut: this.aiExecuteShortcut } : {}),
+          getProvider: () => this.getActiveProvider(),
+        }),
       ],
       content: this.content,
       injectCSS: false,
