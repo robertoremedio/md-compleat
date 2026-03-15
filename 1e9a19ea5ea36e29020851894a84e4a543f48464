@@ -1,0 +1,31 @@
+src/ai/cli-provider.ts
+  648e890565ce8c9e 1-6
+src/__tests__/ai-provider.test.ts
+  648e890565ce8c9e 1-331
+src/ai/http-provider.ts
+  648e890565ce8c9e 1-6
+src/ai/provider-factory.ts
+  648e890565ce8c9e 1-4
+src/ai/prompt.ts
+  648e890565ce8c9e 1-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "1e9a19ea5ea36e29020851894a84e4a543f48464",
+  "prompts": {
+    "648e890565ce8c9e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "09d87b71-ccfa-4580-8472-f6a7ddbdd0a8",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 375,
+      "total_deletions": 24,
+      "accepted_lines": 351,
+      "overriden_lines": 0
+    }
+  }
+}
