@@ -1,5 +1,4 @@
-import { Node, mergeAttributes } from '@tiptap/core';
-import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { Node, mergeAttributes, nodeInputRule } from '@tiptap/core';
 import { aiDirectiveNodeView } from './ai-directive-view.js';
 
 function escapeAttr(value: string): string {
@@ -84,39 +83,15 @@ export const AiDirective = Node.create({
     };
   },
 
-  addProseMirrorPlugins() {
-    const aiDirectiveType = this.type;
+  addInputRules() {
     return [
-      new Plugin({
-        key: new PluginKey('aiDirectiveSlashCommand'),
-        appendTransaction(transactions, _oldState, newState) {
-          if (!transactions.some((tr) => tr.docChanged)) return null;
-
-          let found = false;
-          let matchFrom = 0;
-          let matchTo = 0;
-
-          newState.doc.descendants((node, pos) => {
-            if (found) return false;
-            if (!node.isTextblock) return true;
-            const text = node.textContent;
-            // Only match if the entire block content is "/ai "
-            if (text === '/ai ') {
-              found = true;
-              matchFrom = pos;
-              matchTo = pos + node.nodeSize;
-            }
-            return false;
-          });
-
-          if (!found) return null;
-
-          const aiNode = aiDirectiveType.create({
-            instruction: '',
-            variant: 'self-closing',
-          });
-          return newState.tr.replaceWith(matchFrom, matchTo, aiNode);
-        },
+      nodeInputRule({
+        find: /^\/ai $/,
+        type: this.type,
+        getAttributes: () => ({
+          instruction: '',
+          variant: 'self-closing',
+        }),
       }),
     ];
   },

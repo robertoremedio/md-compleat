@@ -399,7 +399,7 @@ describe('AI directive insertion commands', () => {
 
       // Focus and type "/ai " to trigger the input rule
       editor.commands.focus();
-      editor.commands.insertContent('/ai ');
+      editor.commands.insertContent('/ai ', { applyInputRules: true });
       await el.updateComplete;
       // Allow input rules to process
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -414,7 +414,7 @@ describe('AI directive insertion commands', () => {
       const editor = (el as any)._editor!;
 
       editor.commands.focus('start');
-      editor.commands.insertContent('/ai ');
+      editor.commands.insertContent('/ai ', { applyInputRules: true });
       await el.updateComplete;
       await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -429,7 +429,7 @@ describe('AI directive insertion commands', () => {
 
       // Place cursor at the end and type "/ai "
       editor.commands.focus('end');
-      editor.commands.insertContent('/ai ');
+      editor.commands.insertContent('/ai ', { applyInputRules: true });
       await el.updateComplete;
       await new Promise((resolve) => setTimeout(resolve, 0));
 

@@ -3,6 +3,7 @@ import type { NodeViewRendererProps } from '@tiptap/core';
 export function aiDirectiveNodeView({ node, editor, getPos }: NodeViewRendererProps) {
   let currentNode = node;
   let editing = false;
+  let destroyed = false;
 
   const dom = document.createElement('div');
   dom.classList.add('ai-chip');
@@ -38,7 +39,7 @@ export function aiDirectiveNodeView({ node, editor, getPos }: NodeViewRendererPr
   }
 
   function enterEditMode() {
-    if (editing) return;
+    if (destroyed || editing) return;
     editing = true;
 
     const input = document.createElement('input');
@@ -47,12 +48,14 @@ export function aiDirectiveNodeView({ node, editor, getPos }: NodeViewRendererPr
     input.classList.add('ai-chip__input');
 
     const commit = () => {
+      if (destroyed) return;
       editing = false;
       updateAttributes({ instruction: input.value });
       showDisplay();
     };
 
     const revert = () => {
+      if (destroyed) return;
       editing = false;
       showDisplay();
     };
@@ -75,6 +78,7 @@ export function aiDirectiveNodeView({ node, editor, getPos }: NodeViewRendererPr
   }
 
   function showDisplay() {
+    if (destroyed) return;
     instructionEl = createInstructionSpan();
     const existing = dom.querySelector('input, textarea');
     if (existing) {
@@ -102,6 +106,9 @@ export function aiDirectiveNodeView({ node, editor, getPos }: NodeViewRendererPr
     },
     ignoreMutation() {
       return true;
+    },
+    destroy() {
+      destroyed = true;
     },
   };
 }
