@@ -254,4 +254,81 @@ describe('Ctrl+K link shortcut', () => {
 
     vi.restoreAllMocks();
   });
+
+  it('Mod-k applied link includes rel="noopener noreferrer"', async () => {
+    const el = await createElement({ content: 'click here for info' });
+    const editor = (el as any)._editor!;
+
+    vi.spyOn(window, 'prompt').mockReturnValue('https://example.com');
+
+    editor.commands.setTextSelection({ from: 7, to: 11 });
+
+    const proseMirror = el.shadowRoot!.querySelector('.ProseMirror') as HTMLElement;
+    proseMirror.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'k',
+        ctrlKey: true,
+        bubbles: true,
+      }),
+    );
+
+    await el.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const link = proseMirror.querySelector('a');
+    expect(link).not.toBeNull();
+    expect(link?.getAttribute('rel')).toBe('noopener noreferrer');
+
+    vi.restoreAllMocks();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Change 3: box-sizing: border-box on .editor
+// ---------------------------------------------------------------------------
+describe('editor box-sizing', () => {
+  it('has box-sizing: border-box on the .editor CSS rule', () => {
+    const css = getStylesheetText();
+    expect(css).toContain('box-sizing: border-box');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Change 4: Input rule extensions are registered
+// ---------------------------------------------------------------------------
+describe('input rule extensions', () => {
+  it('has heading extension registered (for # input rule)', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+    const names = editor.extensionManager.extensions.map((e: any) => e.name);
+    expect(names).toContain('heading');
+  });
+
+  it('has bulletList extension registered (for - input rule)', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+    const names = editor.extensionManager.extensions.map((e: any) => e.name);
+    expect(names).toContain('bulletList');
+  });
+
+  it('has orderedList extension registered (for 1. input rule)', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+    const names = editor.extensionManager.extensions.map((e: any) => e.name);
+    expect(names).toContain('orderedList');
+  });
+
+  it('has codeBlock extension registered (for ``` input rule)', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+    const names = editor.extensionManager.extensions.map((e: any) => e.name);
+    expect(names).toContain('codeBlock');
+  });
+
+  it('has blockquote extension registered (for > input rule)', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+    const names = editor.extensionManager.extensions.map((e: any) => e.name);
+    expect(names).toContain('blockquote');
+  });
 });
