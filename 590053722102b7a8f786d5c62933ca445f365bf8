@@ -1,0 +1,23 @@
+src/__tests__/ai-provider.test.ts
+  0de05047983296d9 569-647
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "590053722102b7a8f786d5c62933ca445f365bf8",
+  "prompts": {
+    "0de05047983296d9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "be86c9e6-92a4-46d3-b8e2-b79524db0f60",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 137,
+      "total_deletions": 58,
+      "accepted_lines": 79,
+      "overriden_lines": 0
+    }
+  }
+}
