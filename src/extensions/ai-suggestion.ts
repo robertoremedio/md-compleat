@@ -49,8 +49,6 @@ export const AiSuggestion = Extension.create({
 
     function accept() {
       if (triggerFrom < 0) return;
-      // Close history group so accept is a single undoable step
-      editor.view.dispatch(closeHistory(editor.view.state.tr));
       const { state } = editor.view;
       const { $from } = state.selection;
       // Replace the entire paragraph containing "/ai" with an aiDirective block
@@ -58,7 +56,8 @@ export const AiSuggestion = Extension.create({
       const blockTo = $from.after($from.depth);
       const nodeType = state.schema.nodes.aiDirective;
       const node = nodeType.create({ instruction: '', variant: 'self-closing' });
-      const tr = state.tr.replaceWith(blockFrom, blockTo, node);
+      // Close history group and replace in a single transaction
+      const tr = closeHistory(state.tr.replaceWith(blockFrom, blockTo, node));
       editor.view.dispatch(tr);
       hide();
     }
