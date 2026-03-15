@@ -269,6 +269,11 @@ export class MdCompleat extends LitElement {
 
   @property({ type: String }) content = '';
   @property({ type: String, attribute: 'ai-shortcut' }) aiShortcut = '';
+  @property({ type: String, attribute: 'ai-provider' }) aiProviderName = '';
+  @property({ type: String, attribute: 'ai-model' }) aiModel = '';
+  @property({ type: String, attribute: 'ai-api-key' }) aiApiKey = '';
+  @property({ type: String, attribute: 'ai-endpoint' }) aiEndpoint = '';
+  @property({ type: String, attribute: 'ai-cli-command' }) aiCliCommand = '';
 
   private _editor: Editor | null = null;
   private _updatingFromEditor = false;
