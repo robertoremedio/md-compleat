@@ -394,3 +394,137 @@ describe('slash command suggestion popup', () => {
     expect(css).toMatch(/\.ai-suggestion/);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Change 1: No inline style mutation on editor element
+// ---------------------------------------------------------------------------
+describe('dropdown positioning uses CSS not inline styles', () => {
+  it('.editor CSS rule includes position: relative', () => {
+    const css = getStylesheetText();
+    // The .editor rule should contain position: relative so the
+    // absolutely-positioned dropdown is anchored without inline mutation.
+    expect(css).toMatch(/\.editor\s*\{[^}]*position:\s*relative/);
+  });
+
+  it('showing the suggestion dropdown does not mutate inline position style', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+    const editorEl = el.shadowRoot!.querySelector('.editor') as HTMLElement;
+
+    // Record the inline position before triggering the dropdown
+    const originalPosition = editorEl.style.position;
+
+    editor.commands.focus();
+    editor.commands.insertContent('/ai');
+    await el.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Dropdown should be visible
+    const dropdown = el.shadowRoot!.querySelector('.ai-suggestion');
+    expect(dropdown).not.toBeNull();
+
+    // Inline position must NOT have been mutated
+    expect(editorEl.style.position).toBe(originalPosition);
+  });
+
+  it('dismissing the dropdown leaves no residual inline position style', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+    const editorEl = el.shadowRoot!.querySelector('.editor') as HTMLElement;
+
+    const originalPosition = editorEl.style.position;
+
+    editor.commands.focus();
+    editor.commands.insertContent('/ai');
+    await el.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Dismiss via Escape
+    const proseMirror = el.shadowRoot!.querySelector('.ProseMirror') as HTMLElement;
+    proseMirror.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    );
+    await el.updateComplete;
+
+    // Inline position must be unchanged from original
+    expect(editorEl.style.position).toBe(originalPosition);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Change 2: Atomic accept — delete + insert in a single transaction
+// ---------------------------------------------------------------------------
+describe('accept uses atomic transaction', () => {
+  it('a single undo after accepting reverts both deletion and insertion', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+
+    editor.commands.focus();
+    editor.commands.insertContent('/ai');
+    await el.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const dropdown = el.shadowRoot!.querySelector('.ai-suggestion');
+    expect(dropdown).not.toBeNull();
+
+    // Accept the suggestion via Enter
+    const proseMirror = el.shadowRoot!.querySelector('.ProseMirror') as HTMLElement;
+    proseMirror.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+    );
+    await el.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Verify aiDirective was inserted
+    let json = editor.getJSON();
+    const aiNode = json.content?.find((n: any) => n.type === 'aiDirective');
+    expect(aiNode).toBeDefined();
+
+    // A single undo should revert the entire accept operation atomically:
+    // both the "/ai" deletion and the aiDirective insertion.
+    editor.commands.undo();
+    await el.updateComplete;
+
+    json = editor.getJSON();
+    const aiNodeAfterUndo = json.content?.find(
+      (n: any) => n.type === 'aiDirective',
+    );
+    expect(aiNodeAfterUndo).toBeUndefined();
+
+    // The original "/ai" text should be restored
+    const text = editor.getText();
+    expect(text).toContain('/ai');
+  });
+
+  it('a single undo after click-accept also reverts atomically', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+
+    editor.commands.focus();
+    editor.commands.insertContent('/ai');
+    await el.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const dropdown = el.shadowRoot!.querySelector('.ai-suggestion');
+    expect(dropdown).not.toBeNull();
+
+    // Accept via click
+    (dropdown as HTMLElement).click();
+    await el.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Verify insertion
+    let json = editor.getJSON();
+    expect(json.content?.find((n: any) => n.type === 'aiDirective')).toBeDefined();
+
+    // Single undo should revert everything
+    editor.commands.undo();
+    await el.updateComplete;
+
+    json = editor.getJSON();
+    expect(
+      json.content?.find((n: any) => n.type === 'aiDirective'),
+    ).toBeUndefined();
+    expect(editor.getText()).toContain('/ai');
+  });
+});
