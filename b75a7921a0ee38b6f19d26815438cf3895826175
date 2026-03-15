@@ -1,0 +1,23 @@
+src/md-compleat.ts
+  6ceb34d555318ada 80,270
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "b75a7921a0ee38b6f19d26815438cf3895826175",
+  "prompts": {
+    "6ceb34d555318ada": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "526d678f-7e94-4a65-be49-248357fc2b82",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 14,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
