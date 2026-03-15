@@ -1,0 +1,23 @@
+src/__tests__/ai-tag-insertion-ux.test.ts
+  2223a7c38206bdeb 1-396
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "c30bd60b2360516713a3894a2d06c530e35700b3",
+  "prompts": {
+    "2223a7c38206bdeb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c9a03e4-0252-4c76-8c60-7dfa8101cabc",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 396,
+      "total_deletions": 0,
+      "accepted_lines": 396,
+      "overriden_lines": 0
+    }
+  }
+}
