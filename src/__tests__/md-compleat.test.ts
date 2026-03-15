@@ -159,7 +159,57 @@ describe('content-changed event', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Step 6: Base styles
+// Step 6: _updatingFromEditor race condition fix
+// ---------------------------------------------------------------------------
+describe('editor-originated update does not redundantly call setContent', () => {
+  it('_updatingFromEditor is still true when updated() processes an editor-originated content change', async () => {
+    const el = await createElement();
+
+    // Capture the flag value at the moment updated() runs
+    const flagValues: boolean[] = [];
+    const originalUpdated = el.updated.bind(el);
+    el.updated = (changedProperties: Map<string, unknown>) => {
+      if (changedProperties.has('content')) {
+        flagValues.push((el as any)._updatingFromEditor);
+      }
+      originalUpdated(changedProperties);
+    };
+
+    // Simulate editor-originated content change
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<p>User typed this</p>');
+
+    // Wait for Lit's reactive update cycle
+    await el.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // The flag should have been true when updated() ran, proving the
+    // flag survived the async gap between onUpdate and updated().
+    // BUG: with current code, _updatingFromEditor is reset to false
+    // synchronously in onUpdate before Lit's updated() runs.
+    expect(flagValues).toContain(true);
+  });
+
+  it('resets _updatingFromEditor to false after updated() processes it', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+
+    // Trigger editor-originated update
+    editor.commands.setContent('<p>Editor change</p>');
+    await el.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Flag should be reset to false after updated() processed it,
+    // so subsequent external changes still flow through to setContent.
+    // BUG: with current code the flag is reset in onUpdate not updated(),
+    // so this test passes vacuously — but it will verify correct behavior
+    // after the fix moves the reset into updated().
+    expect((el as any)._updatingFromEditor).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Step 7: Base styles
 // ---------------------------------------------------------------------------
 describe('base styles', () => {
   it('host element has display: block', async () => {
