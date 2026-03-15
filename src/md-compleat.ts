@@ -11,6 +11,8 @@ import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import { AiDirective } from './extensions/ai-directive.js';
 import { AiSuggestion } from './extensions/ai-suggestion.js';
+import type { AiProvider } from './ai/provider.js';
+import { createProvider } from './ai/provider-factory.js';
 
 const LinkShortcut = Extension.create({
   name: 'linkShortcut',
@@ -278,6 +280,30 @@ export class MdCompleat extends LitElement {
 
   private _editor: Editor | null = null;
   private _updatingFromEditor = false;
+  private _aiProvider: AiProvider | null = null;
+
+  set aiProvider(provider: AiProvider | null) {
+    this._aiProvider = provider;
+    this.requestUpdate();
+  }
+
+  get aiProvider(): AiProvider | null {
+    return this._aiProvider;
+  }
+
+  getActiveProvider(): AiProvider {
+    if (this._aiProvider) {
+      return this._aiProvider;
+    }
+    return createProvider({
+      provider: this.aiProviderName,
+      apiKey: this.aiApiKey,
+      model: this.aiModel,
+      endpoint: this.aiEndpoint,
+      cliCommand: this.aiCliCommand,
+      proxyHeaders: this.aiProxyHeaders,
+    });
+  }
 
   override render() {
     return html`<div class="editor"></div>`;
