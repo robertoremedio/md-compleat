@@ -1,0 +1,25 @@
+src/md-compleat.ts
+  ba5caad8a2790cfb 14,275,348,366,383-386
+src/extensions/ai-execute.ts
+  ba5caad8a2790cfb 1-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "1f53ac1b79ae74a5106a93d8aa6bc3b79abc83d5",
+  "prompts": {
+    "ba5caad8a2790cfb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "56751332-2ff9-4fb1-a5bf-244d0ccbd5a4",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 99,
+      "total_deletions": 6,
+      "accepted_lines": 94,
+      "overriden_lines": 0
+    }
+  }
+}
