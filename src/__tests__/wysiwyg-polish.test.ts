@@ -119,11 +119,6 @@ describe('focus state and layout styles', () => {
     expect(css).toContain('--md-compleat-max-width');
   });
 
-  it('has empty-state placeholder styling', () => {
-    const css = getStylesheetText();
-    // Tiptap uses .is-empty or [data-placeholder] for empty state
-    expect(css).toMatch(/is-empty|placeholder/);
-  });
 });
 
 // ---------------------------------------------------------------------------

@@ -77,6 +77,7 @@ export class MdCompleat extends LitElement {
       max-width: var(--md-compleat-max-width);
       max-height: var(--md-compleat-max-height);
       overflow-y: auto;
+      box-sizing: border-box;
     }
 
     .ProseMirror {
@@ -205,15 +206,7 @@ export class MdCompleat extends LitElement {
       height: auto;
     }
 
-    /* Placeholder / empty state */
-    .ProseMirror p.is-empty::before {
-      content: attr(data-placeholder);
-      color: rgba(0, 0, 0, 0.35);
-      pointer-events: none;
-      float: left;
-      height: 0;
-    }
-  `;
+`;
 
   @property({ type: String }) content = '';
 
@@ -274,6 +267,7 @@ export class MdCompleat extends LitElement {
         Image,
         Link.configure({
           openOnClick: false,
+          HTMLAttributes: { rel: 'noopener noreferrer' },
         }),
         LinkShortcut,
         Table,
