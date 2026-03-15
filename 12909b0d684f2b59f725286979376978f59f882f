@@ -1,0 +1,23 @@
+src/__tests__/markdown-html-disabled.test.ts
+  d725358c2c988eac 1-72,74-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "12909b0d684f2b59f725286979376978f59f882f",
+  "prompts": {
+    "d725358c2c988eac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b8aaab00-87c3-418b-b497-84cfaf503d91",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 115,
+      "total_deletions": 39,
+      "accepted_lines": 75,
+      "overriden_lines": 0
+    }
+  }
+}
