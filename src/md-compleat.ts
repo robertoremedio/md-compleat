@@ -281,6 +281,7 @@ export class MdCompleat extends LitElement {
   private _editor: Editor | null = null;
   private _updatingFromEditor = false;
   private _aiProvider: AiProvider | null = null;
+  private _cachedProvider: AiProvider | null = null;
 
   set aiProvider(provider: AiProvider | null) {
     this._aiProvider = provider;
@@ -295,14 +296,17 @@ export class MdCompleat extends LitElement {
     if (this._aiProvider) {
       return this._aiProvider;
     }
-    return createProvider({
-      provider: this.aiProviderName,
-      apiKey: this.aiApiKey,
-      model: this.aiModel,
-      endpoint: this.aiEndpoint,
-      cliCommand: this.aiCliCommand,
-      proxyHeaders: this.aiProxyHeaders,
-    });
+    if (!this._cachedProvider) {
+      this._cachedProvider = createProvider({
+        provider: this.aiProviderName,
+        apiKey: this.aiApiKey,
+        model: this.aiModel,
+        endpoint: this.aiEndpoint,
+        cliCommand: this.aiCliCommand,
+        proxyHeaders: this.aiProxyHeaders,
+      });
+    }
+    return this._cachedProvider;
   }
 
   override render() {
@@ -314,6 +318,10 @@ export class MdCompleat extends LitElement {
   }
 
   override updated(changedProperties: Map<string, unknown>) {
+    const aiKeys = ['aiProviderName', 'aiApiKey', 'aiModel', 'aiEndpoint', 'aiCliCommand', 'aiProxyHeaders'];
+    if (aiKeys.some(k => changedProperties.has(k))) {
+      this._cachedProvider = null;
+    }
     if (changedProperties.has('content') && this._editor) {
       if (this._updatingFromEditor) {
         this._updatingFromEditor = false;
