@@ -1,0 +1,23 @@
+src/__tests__/markdown-round-trip.test.ts
+  dca5b5d90b80cc31 1-272
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "3102cbc14dac9b1637e6220730d8caca1e6c85d1",
+  "prompts": {
+    "dca5b5d90b80cc31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6ee7bf01-661f-4f47-91e0-aa3f2d966cb6",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 272,
+      "total_deletions": 0,
+      "accepted_lines": 272,
+      "overriden_lines": 0
+    }
+  }
+}
