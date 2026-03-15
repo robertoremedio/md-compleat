@@ -8,6 +8,11 @@
   </head>
   <body>
     <h1>md-compleat</h1>
-    <p>Development harness — component will be mounted here.</p>
+    <md-compleat content="<p>Hello from md-compleat!</p>"></md-compleat>
+    <script type="module">
+      document.querySelector('md-compleat').addEventListener('content-changed', (e) => {
+        console.log('content-changed:', e.detail.content);
+      });
+    </script>
   </body>
 </html>
