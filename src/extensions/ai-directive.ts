@@ -4,10 +4,6 @@ function escapeAttr(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
 
-function escapeContent(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;');
-}
-
 export const AiDirective = Node.create({
   name: 'aiDirective',
   group: 'block',
@@ -26,10 +22,15 @@ export const AiDirective = Node.create({
         tag: 'ai',
         getAttrs(element) {
           const el = element as HTMLElement;
+          const variant = el.getAttribute('data-variant');
           const attrInstruction = el.getAttribute('instruction');
+          if (variant === 'block') {
+            return { instruction: attrInstruction || '', variant: 'block' };
+          }
           if (attrInstruction !== null) {
             return { instruction: attrInstruction, variant: 'self-closing' };
           }
+          // Legacy fallback: block form stored as text content
           return { instruction: el.textContent || '', variant: 'block' };
         },
       },
@@ -38,7 +39,7 @@ export const AiDirective = Node.create({
 
   renderHTML({ node }) {
     if (node.attrs.variant === 'block') {
-      return ['ai', {}, node.attrs.instruction];
+      return ['ai', { instruction: node.attrs.instruction, 'data-variant': 'block' }];
     }
     return ['ai', mergeAttributes({ instruction: node.attrs.instruction })];
   },
@@ -49,7 +50,7 @@ export const AiDirective = Node.create({
         serialize(state: any, node: any) {
           if (node.attrs.variant === 'block') {
             state.write(
-              `<ai>${escapeContent(node.attrs.instruction)}</ai>`,
+              `<ai>${node.attrs.instruction}</ai>`,
             );
           } else {
             state.write(
@@ -93,8 +94,8 @@ export const AiDirective = Node.create({
                   }
                 }
 
-                // Extract raw content between <ai> and </ai>, HTML-encode it
-                // so the DOM doesn't interpret inner HTML-like content
+                // Extract raw content between <ai> and </ai>, store as attribute
+                // to avoid encode/decode/re-encode cycles with text content
                 const rawContent = state.getLines(
                   startLine,
                   nextLine,
@@ -108,9 +109,8 @@ export const AiDirective = Node.create({
                 if (innerMatch) {
                   const inner = innerMatch[1]
                     .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;');
-                  tokenContent = `<ai>${inner}</ai>\n`;
+                    .replace(/"/g, '&quot;');
+                  tokenContent = `<ai instruction="${inner}" data-variant="block"></ai>\n`;
                 } else {
                   tokenContent = rawContent;
                 }

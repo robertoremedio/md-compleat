@@ -68,13 +68,14 @@ describe('AiDirective node extension', () => {
       expect(aiNode.attrs.variant).toBe('block');
     });
 
-    it('renders block variant back to HTML with text content', async () => {
+    it('renders block variant back to HTML with instruction attribute', async () => {
       const el = await createElement();
       const editor = (el as any)._editor!;
       editor.commands.setContent('<ai>expand this section</ai>');
 
       const html = editor.getHTML();
-      expect(html).toContain('<ai>expand this section</ai>');
+      expect(html).toContain('instruction="expand this section"');
+      expect(html).toContain('data-variant="block"');
     });
   });
 
