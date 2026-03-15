@@ -454,4 +454,109 @@ describe('AI directive insertion commands', () => {
       expect(input).not.toBeNull();
     });
   });
+
+  describe('programmatic content does not trigger slash command', () => {
+    it('programmatic setContent of "/ai " does not trigger input rule', async () => {
+      const el = await createElement();
+      const editor = (el as any)._editor!;
+
+      // Use JSON format to preserve trailing space — HTML normalization strips it.
+      // setContent is programmatic — should NOT trigger an input rule.
+      editor.commands.setContent({
+        type: 'doc',
+        content: [
+          { type: 'paragraph', content: [{ type: 'text', text: '/ai ' }] },
+        ],
+      });
+      await el.updateComplete;
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      const json = editor.getJSON();
+      const hasAiNode = json.content?.some(
+        (n: any) => n.type === 'aiDirective',
+      );
+      expect(hasAiNode).toBe(false);
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Node view destruction safety
+// ---------------------------------------------------------------------------
+describe('node view destruction safety', () => {
+  it('commit does not run showDisplay after node view is destroyed', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="edit me" />');
+    await el.updateComplete;
+
+    // Enter edit mode
+    const instruction = el.shadowRoot!.querySelector('.ai-chip__instruction') as HTMLElement;
+    instruction.click();
+    await el.updateComplete;
+
+    const chip = el.shadowRoot!.querySelector('.ai-chip')!;
+    const input = chip.querySelector('input, textarea') as HTMLInputElement;
+    expect(input).not.toBeNull();
+
+    // Destroy the node view by clearing the document
+    editor.commands.setContent('');
+    await el.updateComplete;
+
+    // Trigger blur on the now-orphaned input (fires commit)
+    input.dispatchEvent(new Event('blur', { bubbles: true }));
+
+    // With a destroyed guard, commit returns early — input stays in orphaned DOM.
+    // Without the guard, showDisplay() replaces the input with a span.
+    expect(chip.querySelector('input, textarea')).not.toBeNull();
+  });
+
+  it('revert does not run showDisplay after node view is destroyed', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="edit me" />');
+    await el.updateComplete;
+
+    // Enter edit mode
+    const instruction = el.shadowRoot!.querySelector('.ai-chip__instruction') as HTMLElement;
+    instruction.click();
+    await el.updateComplete;
+
+    const chip = el.shadowRoot!.querySelector('.ai-chip')!;
+    const input = chip.querySelector('input, textarea') as HTMLInputElement;
+    expect(input).not.toBeNull();
+
+    // Destroy the node view by clearing the document
+    editor.commands.setContent('');
+    await el.updateComplete;
+
+    // Trigger Escape on the now-orphaned input (fires revert)
+    input.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    );
+
+    // With a destroyed guard, revert returns early — input stays in orphaned DOM.
+    // Without the guard, showDisplay() replaces the input with a span.
+    expect(chip.querySelector('input, textarea')).not.toBeNull();
+  });
+
+  it('auto-edit queueMicrotask does not enter edit mode after destruction', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+
+    // Insert an AI directive with empty instruction — triggers queueMicrotask auto-edit.
+    // Do NOT await between insert and destroy so the microtask hasn't fired yet.
+    editor.commands.insertAiDirective({ instruction: '' });
+    const chip = el.shadowRoot!.querySelector('.ai-chip')!;
+
+    // Destroy the node view before the microtask fires
+    editor.commands.setContent('');
+
+    // Now let the microtask run
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // With a destroyed guard, enterEditMode returns early — no input created.
+    // Without the guard, enterEditMode runs on orphaned DOM and creates an input.
+    expect(chip.querySelector('input, textarea')).toBeNull();
+  });
 });
