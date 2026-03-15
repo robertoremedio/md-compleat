@@ -971,6 +971,62 @@ describe('MdCompleat AI attributes', () => {
     expect(typeof active.execute).toBe('function');
   });
 
+  // -------------------------------------------------------------------------
+  // Cached provider identity (getActiveProvider caching)
+  // -------------------------------------------------------------------------
+
+  it('returns the same provider instance on consecutive getActiveProvider() calls', async () => {
+    const el = await createElement({
+      'ai-provider': 'anthropic',
+      'ai-api-key': 'test-key',
+      'ai-model': 'claude-sonnet-4-20250514',
+    });
+
+    const first = (el as any).getActiveProvider();
+    const second = (el as any).getActiveProvider();
+    expect(first).toBe(second);
+  });
+
+  it('invalidates cached provider when an AI attribute changes', async () => {
+    const el = await createElement({
+      'ai-provider': 'anthropic',
+      'ai-api-key': 'test-key',
+      'ai-model': 'claude-sonnet-4-20250514',
+    });
+
+    const first = (el as any).getActiveProvider();
+    const second = (el as any).getActiveProvider();
+    // Caching: same instance before attribute change
+    expect(first).toBe(second);
+
+    el.setAttribute('ai-model', 'claude-opus-4-20250514');
+    await el.updateComplete;
+
+    const after = (el as any).getActiveProvider();
+    // Invalidation: different instance after attribute change
+    expect(after).not.toBe(first);
+  });
+
+  it('returns a cached provider with stable identity after custom-to-null roundtrip', async () => {
+    const el = await createElement({
+      'ai-provider': 'anthropic',
+      'ai-api-key': 'test-key',
+      'ai-model': 'claude-sonnet-4-20250514',
+    });
+    const customProvider = { execute: vi.fn().mockResolvedValue('custom-result') };
+
+    // Set custom then reset to null
+    (el as any).aiProvider = customProvider;
+    await el.updateComplete;
+    (el as any).aiProvider = null;
+    await el.updateComplete;
+
+    const first = (el as any).getActiveProvider();
+    const second = (el as any).getActiveProvider();
+    expect(first).toBe(second);
+    expect(first).not.toBe(customProvider);
+  });
+
   it('restores factory fallback when aiProvider is set back to null', async () => {
     const el = await createElement({
       'ai-provider': 'anthropic',
