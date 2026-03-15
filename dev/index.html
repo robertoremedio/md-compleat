@@ -8,7 +8,19 @@
   </head>
   <body>
     <h1>md-compleat</h1>
-    <md-compleat content="<p>Hello from md-compleat!</p>"></md-compleat>
+    <md-compleat content="# Hello from md-compleat
+
+This is a **markdown** editor with *WYSIWYG* editing.
+
+## Features
+
+- Bold and italic text
+- [Links](https://example.com)
+- Code blocks
+- Lists and blockquotes
+
+> Try editing this content!
+"></md-compleat>
     <script type="module">
       document.querySelector('md-compleat').addEventListener('content-changed', (e) => {
         console.log('content-changed:', e.detail.content);

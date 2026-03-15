@@ -2,6 +2,12 @@ import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
+import { Markdown } from 'tiptap-markdown';
+import Image from '@tiptap/extension-image';
+import { Table } from '@tiptap/extension-table';
+import TableRow from '@tiptap/extension-table-row';
+import TableHeader from '@tiptap/extension-table-header';
+import TableCell from '@tiptap/extension-table-cell';
 
 @customElement('md-compleat')
 export class MdCompleat extends LitElement {
@@ -54,12 +60,9 @@ export class MdCompleat extends LitElement {
 
   override connectedCallback() {
     super.connectedCallback();
-    // Ensure display:block is applied directly for environments
-    // where shadow DOM styles aren't computed (e.g. SSR, jsdom)
     if (!this.style.display) {
       this.style.display = 'block';
     }
-    // Re-initialize if reconnected after disconnect
     if (this.hasUpdated && !this._editor) {
       this._initEditor();
     }
@@ -71,17 +74,33 @@ export class MdCompleat extends LitElement {
     this._editor = null;
   }
 
+  getMarkdown(): string {
+    if (!this._editor) return '';
+    return this._editor.storage.markdown.getMarkdown();
+  }
+
   private _initEditor() {
     const element = this.renderRoot.querySelector('.editor');
     if (!element) return;
 
     this._editor = new Editor({
       element: element as HTMLElement,
-      extensions: [StarterKit],
+      extensions: [
+        StarterKit,
+        Markdown.configure({
+          html: false,
+          tightLists: true,
+        }),
+        Image,
+        Table,
+        TableRow,
+        TableHeader,
+        TableCell,
+      ],
       content: this.content,
       injectCSS: false,
       onUpdate: ({ editor }) => {
-        const newContent = editor.getHTML();
+        const newContent = editor.storage.markdown.getMarkdown();
         this._updatingFromEditor = true;
         this.content = newContent;
         this.dispatchEvent(

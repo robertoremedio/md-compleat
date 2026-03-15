@@ -9,7 +9,7 @@ export default defineConfig({
       fileName: 'md-compleat',
     },
     rollupOptions: {
-      external: [/^lit/, /^@tiptap\//],
+      external: [/^lit/, /^@tiptap\//, 'tiptap-markdown'],
     },
   },
 });
