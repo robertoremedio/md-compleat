@@ -9,6 +9,7 @@ import { Table } from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
+import { AiDirective } from './extensions/ai-directive.js';
 
 const LinkShortcut = Extension.create({
   name: 'linkShortcut',
@@ -274,6 +275,7 @@ export class MdCompleat extends LitElement {
         TableRow,
         TableHeader,
         TableCell,
+        AiDirective,
       ],
       content: this.content,
       injectCSS: false,
