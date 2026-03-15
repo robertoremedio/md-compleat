@@ -645,6 +645,32 @@ describe('CliProvider', () => {
         expect.objectContaining({ stdio: ['pipe', 'pipe', 'pipe'] }),
       );
     });
+
+    // -- Shell operator rejection -----------------------------------------------
+
+    it('rejects command containing && operator', async () => {
+      const provider = await createMockedProvider('my-llm && rm -rf /');
+      await expect(provider.execute('doc')).rejects.toThrow(/shell operators/i);
+      expect(spawnMock).not.toHaveBeenCalled();
+    });
+
+    it('rejects command containing pipe operator', async () => {
+      const provider = await createMockedProvider('my-llm | grep foo');
+      await expect(provider.execute('doc')).rejects.toThrow(/shell operators/i);
+      expect(spawnMock).not.toHaveBeenCalled();
+    });
+
+    it('rejects command containing semicolon operator', async () => {
+      const provider = await createMockedProvider('my-llm ; echo pwned');
+      await expect(provider.execute('doc')).rejects.toThrow(/shell operators/i);
+      expect(spawnMock).not.toHaveBeenCalled();
+    });
+
+    it('rejects command containing redirect operator', async () => {
+      const provider = await createMockedProvider('my-llm > output.txt');
+      await expect(provider.execute('doc')).rejects.toThrow(/shell operators/i);
+      expect(spawnMock).not.toHaveBeenCalled();
+    });
   });
 
   // -- Factory integration ---------------------------------------------------
