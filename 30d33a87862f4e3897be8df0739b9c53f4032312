@@ -1,0 +1,23 @@
+src/__tests__/npm-package-config.test.ts
+  41b051caaf363201 1-232
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "30d33a87862f4e3897be8df0739b9c53f4032312",
+  "prompts": {
+    "41b051caaf363201": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab56ff73-96d8-4b6b-9eeb-d699bd581a0b",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 232,
+      "total_deletions": 0,
+      "accepted_lines": 232,
+      "overriden_lines": 0
+    }
+  }
+}
