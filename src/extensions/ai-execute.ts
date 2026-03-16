@@ -2,6 +2,7 @@ import { Extension } from '@tiptap/core';
 import { closeHistory } from '@tiptap/pm/history';
 import { Plugin } from '@tiptap/pm/state';
 import type { AiProvider } from '../ai/provider.js';
+import { getSystemPrompt } from '../ai/prompt.js';
 import { parseMarkdown } from '../ai/parse-markdown.js';
 import { diffDocs } from '../ai/diff-docs.js';
 
@@ -81,8 +82,9 @@ export const AiExecute = Extension.create<AiExecuteOptions>({
         notifyStateChange(true);
 
         const provider = this.options.getProvider();
+        const payload = getSystemPrompt() + '\n\n---\n\n' + markdown;
         provider
-          .execute(markdown, controller.signal)
+          .execute(payload, controller.signal)
           .then((result) => {
             if (editor.isDestroyed) return;
 

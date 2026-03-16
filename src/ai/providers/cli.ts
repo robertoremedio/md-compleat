@@ -1,6 +1,5 @@
 import { parse } from 'shell-quote';
 import type { AiProvider } from '../provider.js';
-import { getSystemPrompt } from '../prompt.js';
 
 export interface CliProviderConfig {
   cliCommand?: string;
@@ -42,8 +41,6 @@ export class CliProvider implements AiProvider {
       );
     }
     const [cmd, ...args] = parsed as string[];
-
-    const payload = getSystemPrompt() + '\n\n---\n\n' + document;
 
     return new Promise<string>((resolve, reject) => {
       const child = spawn(cmd, args, { stdio: ['pipe', 'pipe', 'pipe'] });
@@ -96,7 +93,7 @@ export class CliProvider implements AiProvider {
         signal.addEventListener('abort', onAbort);
       }
 
-      child.stdin.write(payload);
+      child.stdin.write(document);
       child.stdin.end();
     });
   }

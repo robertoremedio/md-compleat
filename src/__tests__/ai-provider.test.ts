@@ -174,17 +174,14 @@ describe('CliProvider', () => {
       );
     });
 
-    it('writes system prompt and document to stdin', async () => {
+    it('writes document to stdin as-is (system prompt is prepended by AiExecute)', async () => {
       simulateSuccess('output');
       const provider = await createMockedProvider('my-llm');
-      const { getSystemPrompt } = await importPrompt();
 
       await provider.execute('# Hello World');
 
       const writtenData = mockStdin.write.mock.calls.map((c: any[]) => c[0]).join('');
-      expect(writtenData).toContain(getSystemPrompt());
-      expect(writtenData).toContain('# Hello World');
-      expect(writtenData).toContain('---'); // separator between system prompt and document
+      expect(writtenData).toBe('# Hello World');
       expect(mockStdin.end).toHaveBeenCalled();
     });
 
