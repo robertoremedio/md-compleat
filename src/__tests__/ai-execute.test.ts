@@ -292,6 +292,28 @@ describe('AiExecute lifecycle', () => {
     expect(() => resolveExecution!('# Result')).not.toThrow();
   });
 
+  it('does not update content when provider rejects', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockRejectedValue(new Error('provider failure')),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+    const originalContent = editor.storage.markdown.getMarkdown();
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Content should remain unchanged after error
+    expect(editor.storage.markdown.getMarkdown()).toBe(originalContent);
+  });
+
   it('disconnectedCallback aborts in-flight request', async () => {
     let capturedSignal: AbortSignal | undefined;
     const provider: AiProvider = {
@@ -318,5 +340,318 @@ describe('AiExecute lifecycle', () => {
     await new Promise((r) => setTimeout(r, 50));
 
     expect(capturedSignal!.aborted).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Step 7: Read-only mode during execution
+// ---------------------------------------------------------------------------
+describe('AiExecute read-only mode', () => {
+  it('sets editor to read-only during execution', async () => {
+    let resolveExecution: (value: string) => void;
+    const provider: AiProvider = {
+      execute: vi.fn().mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveExecution = resolve;
+          }),
+      ),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    expect(editor.isEditable).toBe(true);
+
+    editor.commands.setContent('<ai instruction="test" />');
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Editor should be read-only during execution
+    expect(editor.isEditable).toBe(false);
+
+    // Resolve execution
+    resolveExecution!('# Done');
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Editor should be editable again after completion
+    expect(editor.isEditable).toBe(true);
+  });
+
+  it('restores editable after Escape cancellation', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockReturnValue(new Promise(() => {})),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(editor.isEditable).toBe(false);
+
+    triggerShortcut(el, 'Escape');
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(editor.isEditable).toBe(true);
+  });
+
+  it('restores editable after provider rejection', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockRejectedValue(new Error('fail')),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(editor.isEditable).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Step 8: onExecutionStateChange callback
+// ---------------------------------------------------------------------------
+describe('AiExecute onExecutionStateChange callback', () => {
+  it('calls onExecutionStateChange with true at start and false on completion', async () => {
+    let resolveExecution: (value: string) => void;
+    const provider: AiProvider = {
+      execute: vi.fn().mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveExecution = resolve;
+          }),
+      ),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    const ext = editor.extensionManager.extensions.find(
+      (e: any) => e.name === 'aiExecute',
+    );
+
+    const stateChanges: boolean[] = [];
+    ext.options.onExecutionStateChange = (executing: boolean) => {
+      stateChanges.push(executing);
+    };
+
+    editor.commands.setContent('<ai instruction="test" />');
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(stateChanges).toEqual([true]);
+
+    resolveExecution!('# Done');
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(stateChanges).toEqual([true, false]);
+  });
+
+  it('calls onExecutionStateChange with false on Escape cancel', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockReturnValue(new Promise(() => {})),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    const ext = editor.extensionManager.extensions.find(
+      (e: any) => e.name === 'aiExecute',
+    );
+
+    const stateChanges: boolean[] = [];
+    ext.options.onExecutionStateChange = (executing: boolean) => {
+      stateChanges.push(executing);
+    };
+
+    editor.commands.setContent('<ai instruction="test" />');
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 50));
+
+    triggerShortcut(el, 'Escape');
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(stateChanges).toEqual([true, false]);
+  });
+
+  it('calls onExecutionStateChange with false on provider error', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockRejectedValue(new Error('fail')),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    const ext = editor.extensionManager.extensions.find(
+      (e: any) => e.name === 'aiExecute',
+    );
+
+    const stateChanges: boolean[] = [];
+    ext.options.onExecutionStateChange = (executing: boolean) => {
+      stateChanges.push(executing);
+    };
+
+    editor.commands.setContent('<ai instruction="test" />');
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(stateChanges).toEqual([true, false]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Step 9: .ai-executing CSS class toggle
+// ---------------------------------------------------------------------------
+describe('AiExecute .ai-executing class', () => {
+  it('adds .ai-executing class to .editor div during execution', async () => {
+    let resolveExecution: (value: string) => void;
+    const provider: AiProvider = {
+      execute: vi.fn().mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveExecution = resolve;
+          }),
+      ),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    // Before execution — no class
+    const editorDiv = el.shadowRoot!.querySelector('.editor')!;
+    expect(editorDiv.classList.contains('ai-executing')).toBe(false);
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 50));
+
+    // During execution — class present
+    expect(editorDiv.classList.contains('ai-executing')).toBe(true);
+
+    resolveExecution!('# Done');
+    await new Promise((r) => setTimeout(r, 50));
+
+    // After completion — class removed
+    expect(editorDiv.classList.contains('ai-executing')).toBe(false);
+  });
+
+  it('removes .ai-executing class after Escape cancellation', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockReturnValue(new Promise(() => {})),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 50));
+
+    const editorDiv = el.shadowRoot!.querySelector('.editor')!;
+    expect(editorDiv.classList.contains('ai-executing')).toBe(true);
+
+    triggerShortcut(el, 'Escape');
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(editorDiv.classList.contains('ai-executing')).toBe(false);
+  });
+
+  it('removes .ai-executing class after provider error', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockRejectedValue(new Error('fail')),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    const editorDiv = el.shadowRoot!.querySelector('.editor')!;
+    expect(editorDiv.classList.contains('ai-executing')).toBe(false);
+  });
+
+  it('querying .editor.ai-executing returns element during execution', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockReturnValue(new Promise(() => {})),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 50));
+
+    // The compound selector should match during execution
+    expect(el.shadowRoot!.querySelector('.editor.ai-executing')).not.toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Step 10: Cleanup on disconnect during execution
+// ---------------------------------------------------------------------------
+describe('AiExecute disconnect cleanup', () => {
+  it('cleans up visual state when disconnected during execution and reconnected', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockReturnValue(new Promise(() => {})),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Disconnect element mid-execution
+    document.body.removeChild(el);
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Reconnect element
+    document.body.appendChild(el);
+    await el.updateComplete;
+
+    // Editor should be editable after reconnect
+    const newEditor = (el as any)._editor!;
+    expect(newEditor.isEditable).toBe(true);
+
+    // .ai-executing class should be absent
+    const editorDiv = el.shadowRoot!.querySelector('.editor');
+    expect(editorDiv).not.toBeNull();
+    expect(editorDiv!.classList.contains('ai-executing')).toBe(false);
   });
 });
