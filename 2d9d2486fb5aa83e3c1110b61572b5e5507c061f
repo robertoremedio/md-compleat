@@ -1,0 +1,29 @@
+package.json
+  0c4379c4b8595dfd 19
+src/__tests__/ai-provider.test.ts
+  0c4379c4b8595dfd 593-594,631-632,644-645,662-663,673-674,682,692-693,711-712
+src/md-compleat.ts
+  0c4379c4b8595dfd 403,475,482-494,546-548
+dev/index.html
+  0c4379c4b8595dfd 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "2d9d2486fb5aa83e3c1110b61572b5e5507c061f",
+  "prompts": {
+    "0c4379c4b8595dfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6184387b-bb41-4f36-8a1e-cbebb40a52ab",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 42,
+      "total_deletions": 352,
+      "accepted_lines": 40,
+      "overriden_lines": 0
+    }
+  }
+}
