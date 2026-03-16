@@ -1,0 +1,25 @@
+src/md-compleat.ts
+  0c4379c4b8595dfd 62-68,75,82-97,190,262,280,285,290-291,293,302,333,400,408
+README.md
+  0c4379c4b8595dfd 136-137,141,145-151
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "d04bdb40cbeaf608a3bbe6a87256e5d9d4672e26",
+  "prompts": {
+    "0c4379c4b8595dfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6184387b-bb41-4f36-8a1e-cbebb40a52ab",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 45,
+      "total_deletions": 31,
+      "accepted_lines": 45,
+      "overriden_lines": 0
+    }
+  }
+}
