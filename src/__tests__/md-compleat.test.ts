@@ -412,6 +412,183 @@ describe('error toast', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Step 8 coverage: Mod-k on existing link, _handleEscapeCancel,
+// getMarkdown() before init, rapid successive errors
+// ---------------------------------------------------------------------------
+describe('Mod-k link editing', () => {
+  let promptSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    promptSpy = vi.spyOn(window, 'prompt');
+  });
+
+  afterEach(() => {
+    promptSpy.mockRestore();
+  });
+
+  it('cancel prompt on existing link leaves link unchanged', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+
+    // Set content with text, then programmatically add a link mark
+    editor.commands.setContent('click me');
+    // Select all text and set link
+    editor.commands.setTextSelection({ from: 1, to: 9 });
+    editor.commands.setLink({ href: 'https://example.com' });
+    await el.updateComplete;
+
+    // Place cursor inside the link (collapsed selection)
+    editor.commands.setTextSelection(3);
+
+    // Verify link is active
+    expect(editor.isActive('link')).toBe(true);
+
+    // prompt returns null (cancelled)
+    promptSpy.mockReturnValue(null);
+
+    const proseMirror = el.shadowRoot!.querySelector('.ProseMirror') as HTMLElement;
+    proseMirror.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'k',
+        ctrlKey: true,
+        bubbles: true,
+      }),
+    );
+    await el.updateComplete;
+
+    // Link should still be there with original href
+    const attrs = editor.getAttributes('link');
+    expect(attrs.href).toBe('https://example.com');
+  });
+
+  it('entering new URL on existing link updates href', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+
+    // Set content with text, then programmatically add a link mark
+    editor.commands.setContent('click me');
+    editor.commands.setTextSelection({ from: 1, to: 9 });
+    editor.commands.setLink({ href: 'https://old.com' });
+    await el.updateComplete;
+
+    // Place cursor inside the link (collapsed selection)
+    editor.commands.setTextSelection(3);
+    expect(editor.isActive('link')).toBe(true);
+
+    // prompt returns a new URL
+    promptSpy.mockReturnValue('https://new.com');
+
+    const proseMirror = el.shadowRoot!.querySelector('.ProseMirror') as HTMLElement;
+    proseMirror.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'k',
+        ctrlKey: true,
+        bubbles: true,
+      }),
+    );
+    await el.updateComplete;
+
+    const attrs = editor.getAttributes('link');
+    expect(attrs.href).toBe('https://new.com');
+  });
+});
+
+describe('_handleEscapeCancel via document keydown', () => {
+  it('pressing Escape via document during AI execution aborts and restores state', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockReturnValue(new Promise(() => {})),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Verify execution is in progress
+    expect(editor.isEditable).toBe(false);
+    const editorDiv = el.shadowRoot!.querySelector('.editor')!;
+    expect(editorDiv.classList.contains('ai-executing')).toBe(true);
+
+    // Press Escape via document (the _handleEscapeCancel path)
+    const escapeEvent = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+    });
+    document.dispatchEvent(escapeEvent);
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Editor should be restored
+    expect(editor.isEditable).toBe(true);
+    expect(editorDiv.classList.contains('ai-executing')).toBe(false);
+  });
+});
+
+describe('getMarkdown() before editor init', () => {
+  it('returns empty string before editor is initialized', () => {
+    // Create element without appending to DOM (no firstUpdated)
+    const el = document.createElement('md-compleat') as MdCompleat;
+    expect(el.getMarkdown()).toBe('');
+  });
+});
+
+describe('rapid successive AI errors', () => {
+  it('second error replaces first toast message', async () => {
+    // First error
+    const provider1: AiProvider = {
+      execute: vi.fn().mockRejectedValue(new Error('first error')),
+    };
+    const el = await createElement();
+    el.aiProvider = provider1;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider1.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+    await el.updateComplete;
+
+    let toast = el.shadowRoot!.querySelector('.ai-error-toast');
+    expect(toast).not.toBeNull();
+    expect(toast!.textContent).toContain('first error');
+
+    // Second error — switch to a new provider that also fails
+    const provider2: AiProvider = {
+      execute: vi.fn().mockRejectedValue(new Error('second error')),
+    };
+    el.aiProvider = provider2;
+    await el.updateComplete;
+
+    // Need to re-add directive content since it was replaced
+    editor.commands.setContent('<ai instruction="test2" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider2.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+    await el.updateComplete;
+
+    // Second toast should replace first
+    toast = el.shadowRoot!.querySelector('.ai-error-toast');
+    expect(toast).not.toBeNull();
+    expect(toast!.textContent).toContain('second error');
+
+    // There should only be one toast element
+    const toasts = el.shadowRoot!.querySelectorAll('.ai-error-toast');
+    expect(toasts.length).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Step 9: ai-error event on component
 // ---------------------------------------------------------------------------
 describe('ai-error event on component', () => {

@@ -481,6 +481,91 @@ describe('AI directive insertion commands', () => {
 });
 
 // ---------------------------------------------------------------------------
+// NodeView stopEvent handler
+// ---------------------------------------------------------------------------
+describe('AI chip stopEvent', () => {
+  it('stopEvent returns true for input, textarea, and toggle targets', async () => {
+    const { aiDirectiveNodeView } = await import('../extensions/ai-directive-view.js');
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+
+    // Create a node to pass to the factory
+    const nodeType = editor.schema.nodes.aiDirective;
+    const node = nodeType.create({ instruction: 'test', variant: 'self-closing' });
+    const view = aiDirectiveNodeView({
+      node,
+      editor,
+      getPos: () => 0,
+      HTMLAttributes: {},
+      decorations: [] as any,
+      innerDecorations: [] as any,
+      extension: {} as any,
+    });
+
+    const input = document.createElement('input');
+    const textarea = document.createElement('textarea');
+    const toggle = document.createElement('button');
+    toggle.classList.add('ai-chip__toggle');
+    const div = document.createElement('div');
+
+    expect(view.stopEvent!({ target: input } as any)).toBe(true);
+    expect(view.stopEvent!({ target: textarea } as any)).toBe(true);
+    expect(view.stopEvent!({ target: toggle } as any)).toBe(true);
+    expect(view.stopEvent!({ target: div } as any)).toBe(false);
+  });
+
+  it('toggle button click changes variant', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+    await el.updateComplete;
+
+    const toggle = el.shadowRoot!.querySelector('.ai-chip__toggle') as HTMLElement;
+    expect(toggle).not.toBeNull();
+
+    toggle.click();
+    await el.updateComplete;
+
+    const json = editor.getJSON();
+    const aiNode = json.content?.find((n: any) => n.type === 'aiDirective');
+    expect(aiNode.attrs.variant).toBe('block');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// showDisplay fallback appendChild
+// ---------------------------------------------------------------------------
+describe('AI chip showDisplay fallback', () => {
+  it('appends instruction span when no input/textarea exists in chip DOM', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="edit me" />');
+    await el.updateComplete;
+
+    // Enter edit mode
+    const instruction = el.shadowRoot!.querySelector('.ai-chip__instruction') as HTMLElement;
+    instruction.click();
+    await el.updateComplete;
+
+    const chip = el.shadowRoot!.querySelector('.ai-chip')!;
+    const input = chip.querySelector('input, textarea') as HTMLInputElement;
+    expect(input).not.toBeNull();
+
+    // Manually remove the input to trigger the fallback appendChild path
+    input.remove();
+
+    // Now trigger showDisplay by blurring (commit fires, calls showDisplay)
+    // Since input is detached, showDisplay won't find it and uses appendChild
+    input.dispatchEvent(new Event('blur'));
+    await el.updateComplete;
+
+    // The instruction span should be appended
+    const restoredInstruction = chip.querySelector('.ai-chip__instruction');
+    expect(restoredInstruction).not.toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Node view destruction safety
 // ---------------------------------------------------------------------------
 describe('node view destruction safety', () => {

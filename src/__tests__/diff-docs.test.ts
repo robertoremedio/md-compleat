@@ -114,6 +114,41 @@ describe('diffDocs utility', () => {
     expect(result.charactersChanged).toBeGreaterThan(0);
   });
 
+  it('returns empty ranges when findDiffEnd returns null', () => {
+    // Mock ProseMirror content objects to trigger the defensive guard
+    const mockContent = {
+      findDiffStart: () => 5, // found a diff start
+      findDiffEnd: () => null, // but no diff end
+      size: 10,
+    };
+    const oldDoc = { content: mockContent } as any;
+    const newDoc = { content: mockContent } as any;
+
+    const result = diffDocs(oldDoc, newDoc);
+    expect(result.ranges).toEqual([]);
+    expect(result.charactersChanged).toBe(0);
+  });
+
+  it('returns empty ranges when clamped range is empty', () => {
+    // Mock content where diff region extends beyond bounds
+    const mockOldContent = {
+      findDiffStart: () => 10,
+      findDiffEnd: () => ({ a: 10, b: 10 }),
+      size: 5,
+    };
+    const mockNewContent = {
+      findDiffStart: () => 10,
+      findDiffEnd: () => ({ a: 10, b: 10 }),
+      size: 5,
+    };
+    const oldDoc = { content: mockOldContent } as any;
+    const newDoc = { content: mockNewContent } as any;
+
+    const result = diffDocs(oldDoc, newDoc);
+    expect(result.ranges).toEqual([]);
+    expect(result.charactersChanged).toBe(0);
+  });
+
   it('returns valid from/to positions within the new document bounds', async () => {
     const el = await createElement();
     const editor = (el as any)._editor!;

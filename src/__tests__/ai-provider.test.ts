@@ -8,7 +8,7 @@ async function importFactory() {
 }
 
 async function importCliProvider() {
-  return import('../ai/cli-provider.js');
+  return import('../ai/providers/cli.js');
 }
 
 async function importProxyProvider() {
@@ -208,6 +208,15 @@ describe('CliProvider', () => {
       const provider = await createMockedProvider('my-llm');
 
       await expect(provider.execute('doc')).rejects.toThrow(/127/);
+    });
+
+    it('includes exit code in error message when stderr is empty', async () => {
+      simulateFailure(1, '');
+      const provider = await createMockedProvider('my-llm');
+
+      await expect(provider.execute('doc')).rejects.toThrow(
+        /CLI command exited with code 1/,
+      );
     });
 
     it('rejects on process error event (e.g. command not found)', async () => {

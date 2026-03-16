@@ -1095,6 +1095,107 @@ describe('AiExecute success feedback', () => {
 // ---------------------------------------------------------------------------
 // Success feedback: negative paths and cleanup
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Step 5 coverage: default getProvider throws, duplicate execution no-op,
+// parseMarkdown throw path
+// ---------------------------------------------------------------------------
+describe('AiExecute default getProvider', () => {
+  it('default getProvider throws when no provider configured and execute shortcut triggers', async () => {
+    // Test the AiExecute extension's default getProvider option directly
+    // (not via component, which wires its own getActiveProvider).
+    // Import the extension and verify its default option throws.
+    const { AiExecute } = await import('../extensions/ai-execute.js');
+    const defaultOptions = AiExecute.options;
+    expect(() => defaultOptions.getProvider()).toThrow(
+      'AiExecute: getProvider not configured',
+    );
+  });
+});
+
+describe('AiExecute shortcut while execution in progress', () => {
+  it('pressing execute shortcut while execution in progress is a no-op', async () => {
+    // Provider that never resolves (simulates in-flight request)
+    const provider: AiProvider = {
+      execute: vi.fn().mockReturnValue(new Promise(() => {})),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    // First trigger — starts execution
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(provider.execute).toHaveBeenCalledTimes(1);
+    expect(editor.storage.aiExecute.abortController).not.toBeNull();
+
+    // Second trigger — should be a no-op because abortController is already set
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Still only one call
+    expect(provider.execute).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('AiExecute parseMarkdown throw path', () => {
+  it('when parseMarkdown throws, editor restored to editable, ai-error emitted with type parse, onError called', async () => {
+    // Provider returns valid string that will pass the typeof/empty checks
+    // but will cause parseMarkdown to throw internally.
+    // We achieve this by mocking parseMarkdown to throw.
+    const provider: AiProvider = {
+      execute: vi.fn().mockResolvedValue('# Valid markdown'),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    // Override parseMarkdown to throw via intercepting at the editor level
+    // We'll monkey-patch the markdown parser to throw
+    const originalParse = editor.storage.markdown.parser.parse;
+    editor.storage.markdown.parser.parse = () => {
+      throw new Error('parseMarkdown test error');
+    };
+
+    const errorHandler = vi.fn();
+    editor.view.dom.addEventListener('ai-error', errorHandler);
+
+    const onErrorSpy = vi.fn();
+    editor.storage.aiExecute.onError = onErrorSpy;
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Editor should be restored to editable
+    expect(editor.isEditable).toBe(true);
+
+    // ai-error event should be emitted with type 'parse'
+    expect(errorHandler).toHaveBeenCalledTimes(1);
+    const event = errorHandler.mock.calls[0][0] as CustomEvent;
+    expect(event.detail.type).toBe('parse');
+    expect(event.detail.error.message).toBe('parseMarkdown test error');
+
+    // onError should be called with the error and type 'parse'
+    expect(onErrorSpy).toHaveBeenCalledTimes(1);
+    expect(onErrorSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'parseMarkdown test error' }),
+      'parse',
+    );
+
+    // Restore original
+    editor.storage.markdown.parser.parse = originalParse;
+  });
+});
+
 describe('AiExecute success feedback negative paths', () => {
   it('does NOT show success toast after provider error', async () => {
     const provider: AiProvider = {

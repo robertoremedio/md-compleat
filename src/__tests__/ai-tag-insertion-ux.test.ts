@@ -398,6 +398,61 @@ describe('slash command suggestion popup', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Step 7 coverage: mousedown preventDefault, non-special key passthrough
+// ---------------------------------------------------------------------------
+describe('ai-suggestion dropdown interactions', () => {
+  it('mousedown on suggestion dropdown calls preventDefault', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+
+    editor.commands.focus();
+    editor.commands.insertContent('/ai');
+    await el.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const dropdown = el.shadowRoot!.querySelector('.ai-suggestion') as HTMLElement;
+    expect(dropdown).not.toBeNull();
+
+    // Dispatch a mousedown event and check if it was prevented
+    const mousedownEvent = new MouseEvent('mousedown', {
+      bubbles: true,
+      cancelable: true,
+    });
+    const preventDefaultSpy = vi.spyOn(mousedownEvent, 'preventDefault');
+    dropdown.dispatchEvent(mousedownEvent);
+
+    expect(preventDefaultSpy).toHaveBeenCalled();
+  });
+
+  it('pressing non-special key while dropdown visible returns false (passthrough)', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+
+    editor.commands.focus();
+    editor.commands.insertContent('/ai');
+    await el.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const dropdown = el.shadowRoot!.querySelector('.ai-suggestion');
+    expect(dropdown).not.toBeNull();
+
+    // Press a regular key (e.g., 'a') — handleKeyDown should return false
+    // meaning it does not consume the event (passthrough).
+    const proseMirror = el.shadowRoot!.querySelector('.ProseMirror') as HTMLElement;
+    const keyEvent = new KeyboardEvent('keydown', {
+      key: 'a',
+      bubbles: true,
+      cancelable: true,
+    });
+    proseMirror.dispatchEvent(keyEvent);
+
+    // The key event should NOT have been prevented by the plugin
+    // (handleKeyDown returns false for non-special keys)
+    expect(keyEvent.defaultPrevented).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Change 1: No inline style mutation on editor element
 // ---------------------------------------------------------------------------
 describe('dropdown positioning uses CSS not inline styles', () => {

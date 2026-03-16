@@ -130,6 +130,23 @@ describe('AiDirective node extension', () => {
     });
   });
 
+  describe('legacy HTML parsing', () => {
+    it('parses bare <ai>text</ai> without attributes via DOM parser (legacy fallback)', async () => {
+      const el = await createElement();
+      const editor = (el as any)._editor!;
+      // Bypass tiptap-markdown by using ProseMirror's DOMParser directly
+      const { DOMParser: PmDOMParser } = await import('@tiptap/pm/model');
+      const container = document.createElement('div');
+      container.innerHTML = '<ai>do something legacy</ai>';
+      const parser = PmDOMParser.fromSchema(editor.schema);
+      const doc = parser.parse(container);
+      const aiNode = doc.content.firstChild;
+      expect(aiNode!.type.name).toBe('aiDirective');
+      expect(aiNode!.attrs.instruction).toBe('do something legacy');
+      expect(aiNode!.attrs.variant).toBe('block');
+    });
+  });
+
   describe('markdown serialization', () => {
     it('serializes self-closing variant to markdown with instruction attribute', async () => {
       const el = await createElement();

@@ -16,7 +16,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm test
+      - run: npx vitest run --coverage
       - run: npm run build
 
   # Commit built dist/ so the package is installable directly from GitHub

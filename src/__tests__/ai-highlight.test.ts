@@ -105,6 +105,45 @@ describe('AiHighlight mark extension', () => {
     expect(hasHighlight).toBe(false);
   });
 
+  it('transaction with preventAutoRemove meta does not trigger highlight removal', async () => {
+    const el = await createElement();
+    const editor = (el as any)._editor!;
+
+    editor.commands.setContent('Hello world');
+
+    // Apply aiHighlight mark with aiReplacement meta so it persists
+    const tr = editor.state.tr;
+    const markType = editor.schema.marks.aiHighlight;
+    tr.addMark(1, 6, markType.create());
+    tr.setMeta('aiReplacement', true);
+    editor.view.dispatch(tr);
+
+    // Verify mark exists
+    let hasHighlight = false;
+    editor.state.doc.descendants((node: any) => {
+      if (node.marks?.some((m: any) => m.type.name === 'aiHighlight')) {
+        hasHighlight = true;
+      }
+    });
+    expect(hasHighlight).toBe(true);
+
+    // Now dispatch a content-changing transaction with preventAutoRemove meta
+    // This should NOT strip the highlights
+    const tr2 = editor.state.tr;
+    tr2.insertText(' extra', editor.state.doc.content.size - 1);
+    tr2.setMeta('preventAutoRemove', true);
+    editor.view.dispatch(tr2);
+
+    // aiHighlight marks should still be present
+    hasHighlight = false;
+    editor.state.doc.descendants((node: any) => {
+      if (node.marks?.some((m: any) => m.type.name === 'aiHighlight')) {
+        hasHighlight = true;
+      }
+    });
+    expect(hasHighlight).toBe(true);
+  });
+
   it('preserves aiHighlight marks during programmatic aiReplacement transactions', async () => {
     const el = await createElement();
     const editor = (el as any)._editor!;
