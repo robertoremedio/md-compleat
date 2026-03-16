@@ -19516,7 +19516,7 @@ var jw = U.create({
 						let n = e.push("html_block", "", 0);
 						return n.content = o.replace(/\s*\/>$/, "></ai>") + "\n", n.map = [t, t + 1], e.line = t + 1, !0;
 					}
-					let s = t;
+					let s;
 					for (s = t; s < n; s++) {
 						let t = e.bMarks[s] + e.tShift[s], n = e.eMarks[s];
 						if (e.src.slice(t, n).includes("</ai>")) {
