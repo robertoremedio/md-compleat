@@ -340,6 +340,11 @@ export class MdCompleat extends LitElement {
       to { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
 
+    @keyframes md-compleat-success-toast-in {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .editor.ai-completing::before {
       content: '';
       position: absolute;
@@ -367,7 +372,7 @@ export class MdCompleat extends LitElement {
       font-size: 0.75em;
       color: rgba(0, 0, 0, 0.55);
       z-index: 20;
-      animation: md-compleat-toast-in 0.2s ease-out;
+      animation: md-compleat-success-toast-in 0.2s ease-out;
     }
 
     .ai-success-toast svg {
