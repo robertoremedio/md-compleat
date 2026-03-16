@@ -18,8 +18,13 @@ import { DOMParser as D } from "@tiptap/pm/model";
 function O({ node: e, editor: t, getPos: n }) {
 	let r = e, i = !1, a = !1, o = document.createElement("div");
 	o.classList.add("ai-chip"), o.setAttribute("data-variant", r.attrs.variant);
-	let s = document.createElement("span");
-	s.classList.add("ai-chip__icon"), s.textContent = "▶", o.appendChild(s);
+	let s = document.createElement("button");
+	s.classList.add("ai-chip__icon"), s.textContent = "▶", s.type = "button", s.addEventListener("click", (e) => {
+		e.stopPropagation(), o.dispatchEvent(new CustomEvent("ai-execute-request", {
+			bubbles: !0,
+			composed: !0
+		}));
+	}), o.appendChild(s);
 	let c = document.createElement("button");
 	c.classList.add("ai-chip__toggle"), c.textContent = "⤢", c.type = "button", c.addEventListener("click", (e) => {
 		e.stopPropagation(), d({ variant: r.attrs.variant === "self-closing" ? "block" : "self-closing" });
@@ -69,7 +74,7 @@ function O({ node: e, editor: t, getPos: n }) {
 		},
 		stopEvent(e) {
 			let t = e.target;
-			return t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t.classList?.contains("ai-chip__toggle");
+			return t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t.classList?.contains("ai-chip__toggle") || t.classList?.contains("ai-chip__icon");
 		},
 		ignoreMutation() {
 			return !0;
@@ -347,7 +352,8 @@ var L = l.create({
 		return {
 			abortController: null,
 			onExecutionStateChange: null,
-			onError: null
+			onError: null,
+			executeAi: null
 		};
 	},
 	addKeyboardShortcuts() {
@@ -355,8 +361,7 @@ var L = l.create({
 			(this.storage.onExecutionStateChange ?? this.options.onExecutionStateChange)(e);
 		}, t = (e, t) => {
 			(this.storage.onError ?? this.options.onError)(e, t);
-		};
-		return { [this.options.shortcut]: ({ editor: n }) => {
+		}, n = (n) => {
 			if (this.storage.abortController) return !0;
 			let r = !1;
 			if (n.state.doc.descendants((e) => {
@@ -441,7 +446,8 @@ var L = l.create({
 			}).finally(() => {
 				this.storage.abortController === o && (this.storage.abortController = null, e(!1));
 			}), !0;
-		} };
+		};
+		return this.storage.executeAi = () => n(this.editor), { [this.options.shortcut]: ({ editor: e }) => n(e) };
 	},
 	addProseMirrorPlugins() {
 		let e = this, t = (t) => {
@@ -833,9 +839,15 @@ var G = l.create({
     }
 
     .ai-chip__icon {
+      all: unset;
       color: var(--_muted);
       margin-right: 0.5em;
       flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .ai-chip__icon:hover {
+      color: var(--_fg);
     }
 
     .ai-chip__instruction {
@@ -1081,6 +1093,9 @@ var G = l.create({
 			}
 		}), this._editor.view.dom.addEventListener("ai-completed", () => {
 			this._showCompletionSequence(e);
+		}), this._editor.view.dom.addEventListener("ai-execute-request", () => {
+			let e = this._editor?.extensionManager.extensions.find((e) => e.name === "aiExecute")?.storage.executeAi;
+			e && e();
 		}));
 	}
 };
