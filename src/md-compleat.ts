@@ -613,10 +613,5 @@ export class MdCompleat extends LitElement {
       this._showCompletionSequence(element);
     });
 
-    this._editor.view.dom.addEventListener('ai-execute-request', () => {
-      const executeAi = this._editor?.extensionManager.extensions
-        .find((e) => e.name === 'aiExecute')?.storage.executeAi;
-      if (executeAi) executeAi();
-    });
   }
 }

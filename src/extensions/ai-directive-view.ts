@@ -15,9 +15,9 @@ export function aiDirectiveNodeView({ node, editor, getPos }: NodeViewRendererPr
   icon.type = 'button';
   icon.addEventListener('click', (e) => {
     e.stopPropagation();
-    dom.dispatchEvent(
-      new CustomEvent('ai-execute-request', { bubbles: true, composed: true }),
-    );
+    const executeAi = editor.extensionManager.extensions
+      .find((ext) => ext.name === 'aiExecute')?.storage.executeAi;
+    if (executeAi) executeAi();
   });
   dom.appendChild(icon);
 
