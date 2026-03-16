@@ -1,0 +1,35 @@
+src/extensions/ai-directive-view.ts
+  0c4379c4b8595dfd 78,88
+src/extensions/ai-suggestion.ts
+  0c4379c4b8595dfd 16
+src/md-compleat.ts
+  0c4379c4b8595dfd 491,499,512,581
+src/ai/parse-markdown.ts
+  0c4379c4b8595dfd 10
+src/extensions/ai-execute.ts
+  0c4379c4b8595dfd 74
+src/__tests__/ai-tag-insertion-ux.test.ts
+  0c4379c4b8595dfd 105
+src/extensions/ai-directive.ts
+  0c4379c4b8595dfd 84,93,98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "7a5eafd4cdd8970eada43952eb84f880bde7fc57",
+  "prompts": {
+    "0c4379c4b8595dfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6184387b-bb41-4f36-8a1e-cbebb40a52ab",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 16,
+      "accepted_lines": 13,
+      "overriden_lines": 0
+    }
+  }
+}
