@@ -1,0 +1,29 @@
+src/md-compleat.ts
+  10e6545cd15c1a38 56-70
+vite.config.ts
+  10e6545cd15c1a38 8,10,14-34
+package.json
+  10e6545cd15c1a38 6,9,12,14,18-19,23-24
+README.md
+  10e6545cd15c1a38 1-151
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "d9cfcf6c1b5360ca28f770e1afafc5f8046027e5",
+  "prompts": {
+    "10e6545cd15c1a38": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "836e06e2-652e-4d8f-83ea-b375270d3943",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 197,
+      "total_deletions": 5,
+      "accepted_lines": 197,
+      "overriden_lines": 0
+    }
+  }
+}
