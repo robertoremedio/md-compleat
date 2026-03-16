@@ -37,39 +37,32 @@
               "default": "2px solid highlight"
             },
             {
-              "description": "Code block background color",
-              "name": "--md-compleat-code-bg",
-              "default": "rgba(0, 0, 0, 0.06)"
+              "description": "Code block background color (adapts to light/dark)",
+              "name": "--md-compleat-code-bg"
             },
             {
-              "description": "Blockquote left border",
-              "name": "--md-compleat-blockquote-border",
-              "default": "3px solid rgba(0, 0, 0, 0.2)"
+              "description": "Blockquote left border (adapts to light/dark)",
+              "name": "--md-compleat-blockquote-border"
             },
             {
-              "description": "Horizontal rule color",
-              "name": "--md-compleat-hr-color",
-              "default": "rgba(0, 0, 0, 0.15)"
+              "description": "Horizontal rule color (adapts to light/dark)",
+              "name": "--md-compleat-hr-color"
             },
             {
-              "description": "Table border style",
-              "name": "--md-compleat-table-border",
-              "default": "1px solid rgba(0, 0, 0, 0.15)"
+              "description": "Table border style (adapts to light/dark)",
+              "name": "--md-compleat-table-border"
             },
             {
-              "description": "Link color",
-              "name": "--md-compleat-link-color",
-              "default": "#1a6be0"
+              "description": "Link color (adapts to light/dark)",
+              "name": "--md-compleat-link-color"
             },
             {
-              "description": "AI highlight background",
-              "name": "--md-compleat-ai-highlight",
-              "default": "rgba(74, 144, 226, 0.15)"
+              "description": "AI highlight background (adapts to light/dark)",
+              "name": "--md-compleat-ai-highlight"
             },
             {
-              "description": "AI directive chip background",
-              "name": "--md-compleat-ai-chip-bg",
-              "default": "#f0e6ff"
+              "description": "AI directive chip background (adapts to light/dark)",
+              "name": "--md-compleat-ai-chip-bg"
             },
             {
               "description": "AI directive chip border color",

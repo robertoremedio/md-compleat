@@ -15,17 +15,29 @@ You will receive the full Markdown document. Return the complete document with a
 
 `+e;return new Promise((e,r)=>{let s=n(i,a,{stdio:[`pipe`,`pipe`,`pipe`]}),c=!1,l=t=>{c||(c=!0,e(t))},u=e=>{c||(c=!0,r(e))},d=()=>{t&&t.removeEventListener(`abort`,f)},f=()=>{s.kill(),u(Error(`Aborted`)),d()},p=[],m=[];s.stdout.on(`data`,e=>{p.push(e)}),s.stderr.on(`data`,e=>{m.push(e)}),s.on(`error`,e=>{u(e),d()}),s.on(`close`,e=>{if(e===0)l(Buffer.concat(p).toString());else{let t=Buffer.concat(m).toString();u(Error(`CLI command exited with code ${e}: ${t}`))}d()}),t&&t.addEventListener(`abort`,f),s.stdin.write(o),s.stdin.end()})}},B=class{constructor(e){if(!e.endpoint)throw Error(`Proxy provider requires an endpoint`);if(this.endpoint=e.endpoint,this.headers={"Content-Type":`application/json`},e.proxyHeaders){let t=JSON.parse(e.proxyHeaders);Object.assign(this.headers,t)}}async execute(e,t){let n=await fetch(this.endpoint,{method:`POST`,headers:this.headers,body:JSON.stringify({document:e,format:`markdown`}),signal:t});if(!n.ok)throw Error(`Proxy request failed: ${n.status} ${n.statusText}`);let r=await n.json();if(typeof r.document!=`string`)throw Error(`Invalid proxy response: missing or non-string "document" field`);return r.document}};function V(e){if(!e.provider)throw Error(`ai-provider attribute is required`);switch(e.provider){case`cli`:return new z(e);case`proxy`:return new B(e);default:throw Error(`Unknown AI provider: ${e.provider}`)}}function H(e,t,n,r){var i=arguments.length,a=i<3?t:r===null?r=Object.getOwnPropertyDescriptor(t,n):r,o;if(typeof Reflect==`object`&&typeof Reflect.decorate==`function`)a=Reflect.decorate(e,t,n,r);else for(var s=e.length-1;s>=0;s--)(o=e[s])&&(a=(i<3?o(a):i>3?o(t,n,a):o(t,n))||a);return i>3&&a&&Object.defineProperty(t,n,a),a}var U=r.Extension.create({name:`linkShortcut`,addKeyboardShortcuts(){return{"Mod-k":({editor:e})=>{let{from:t,to:n}=e.state.selection;if(e.isActive(`link`)&&t===n){let t=e.getAttributes(`link`).href??``,n=window.prompt(`Edit URL (clear to remove):`,t);return n===null||(n===``?e.chain().focus().extendMarkRange(`link`).unsetLink().run():e.chain().focus().extendMarkRange(`link`).setLink({href:n}).run()),!0}let r=window.prompt(`Enter URL:`);return r===null||r===``||e.chain().focus().setLink({href:r}).run(),!0}}}}),W=class extends t.LitElement{constructor(...e){super(...e),this.content=``,this.aiShortcut=``,this.aiExecuteShortcut=``,this.aiProviderName=``,this.aiEndpoint=``,this.aiCliCommand=``,this.aiProxyHeaders=``,this._errorMessage=null,this._showSuccess=!1,this._editor=null,this._updatingFromEditor=!1,this._aiProvider=null,this._cachedProvider=null,this._errorToastTimer=null,this._successTimer=null,this._boundEscapeHandler=this._handleEscapeCancel.bind(this)}static{this.styles=t.css`
     :host {
+      color-scheme: light dark;
       --md-compleat-font-family: system-ui, -apple-system, sans-serif;
       --md-compleat-font-mono: ui-monospace, 'SFMono-Regular', 'SF Mono',
         Menlo, Consolas, monospace;
       --md-compleat-max-width: 65ch;
       --md-compleat-max-height: none;
       --md-compleat-focus-outline: 2px solid highlight;
-      --md-compleat-code-bg: rgba(0, 0, 0, 0.06);
-      --md-compleat-blockquote-border: 3px solid rgba(0, 0, 0, 0.2);
-      --md-compleat-hr-color: rgba(0, 0, 0, 0.15);
-      --md-compleat-table-border: 1px solid rgba(0, 0, 0, 0.15);
-      --md-compleat-link-color: #1a6be0;
+      --md-compleat-code-bg: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.08));
+      --md-compleat-blockquote-border: 3px solid light-dark(rgba(0, 0, 0, 0.2), rgba(255, 255, 255, 0.2));
+      --md-compleat-hr-color: light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.15));
+      --md-compleat-table-border: 1px solid light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.15));
+      --md-compleat-link-color: light-dark(#1a6be0, #5b9cf0);
+      --md-compleat-ai-highlight: light-dark(rgba(74, 144, 226, 0.15), rgba(74, 144, 226, 0.25));
+      --md-compleat-ai-chip-bg: light-dark(#f0e6ff, #2d1f4e);
+      --md-compleat-ai-chip-border: #7c3aed;
+      --_muted: light-dark(rgba(0, 0, 0, 0.4), rgba(255, 255, 255, 0.4));
+      --_muted-strong: light-dark(rgba(0, 0, 0, 0.65), rgba(255, 255, 255, 0.65));
+      --_muted-hover: light-dark(rgba(0, 0, 0, 0.7), rgba(255, 255, 255, 0.7));
+      --_surface: light-dark(#fff, #1e1e1e);
+      --_surface-hover: light-dark(#f0e6ff, #2d1f4e);
+      --_border: light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.15));
+      --_shadow: light-dark(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.4));
+      --_success: light-dark(#16a34a, #4ade80);
       display: block;
     }
 
@@ -118,7 +130,7 @@ You will receive the full Markdown document. Return the complete document with a
       border-left: var(--md-compleat-blockquote-border);
       margin: 0.75em 0;
       padding-left: 1em;
-      color: rgba(0, 0, 0, 0.65);
+      color: var(--_muted-strong);
     }
 
     /* Lists */
@@ -190,7 +202,7 @@ You will receive the full Markdown document. Return the complete document with a
     }
 
     .ai-chip__icon {
-      color: rgba(0, 0, 0, 0.4);
+      color: var(--_muted);
       margin-right: 0.5em;
       flex-shrink: 0;
     }
@@ -208,20 +220,20 @@ You will receive the full Markdown document. Return the complete document with a
       padding: 0 0.25em;
       margin-right: 0.25em;
       font-size: 1em;
-      color: rgba(0, 0, 0, 0.4);
+      color: var(--_muted);
       flex-shrink: 0;
     }
 
     .ai-chip__toggle:hover {
-      color: rgba(0, 0, 0, 0.7);
+      color: var(--_muted-hover);
     }
 
     .ai-suggestion {
       position: absolute;
-      background: #fff;
-      border: 1px solid rgba(0, 0, 0, 0.15);
+      background: var(--_surface);
+      border: 1px solid var(--_border);
       border-radius: 4px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 2px 8px var(--_shadow);
       padding: 0.5em 0.75em;
       cursor: pointer;
       z-index: 10;
@@ -230,7 +242,7 @@ You will receive the full Markdown document. Return the complete document with a
     }
 
     .ai-suggestion:hover {
-      background: #f0e6ff;
+      background: var(--_surface-hover);
     }
 
     /* AI execution state */
@@ -261,7 +273,7 @@ You will receive the full Markdown document. Return the complete document with a
       top: 6px;
       right: 8px;
       font-size: 0.75em;
-      color: rgba(0, 0, 0, 0.45);
+      color: var(--_muted);
       z-index: 10;
     }
 
@@ -328,7 +340,7 @@ You will receive the full Markdown document. Return the complete document with a
       align-items: center;
       gap: 4px;
       font-size: 0.75em;
-      color: rgba(0, 0, 0, 0.55);
+      color: var(--_muted-strong);
       z-index: 20;
       animation: md-compleat-success-toast-in 0.2s ease-out;
     }
@@ -336,7 +348,7 @@ You will receive the full Markdown document. Return the complete document with a
     .ai-success-toast svg {
       width: 14px;
       height: 14px;
-      color: #16a34a;
+      color: var(--_success);
     }
 
   `}set aiProvider(e){this._aiProvider=e,this.requestUpdate()}get aiProvider(){return this._aiProvider}getActiveProvider(){return this._aiProvider?this._aiProvider:(this._cachedProvider||=V({provider:this.aiProviderName,endpoint:this.aiEndpoint,cliCommand:this.aiCliCommand,proxyHeaders:this.aiProxyHeaders}),this._cachedProvider)}render(){return t.html`<div class="editor"></div>${this._errorMessage?t.html`<div class="ai-error-toast">${this._errorMessage}</div>`:``}${this._showSuccess?t.html`<div class="ai-success-toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>`:``}`}firstUpdated(){this._initEditor()}updated(e){[`aiProviderName`,`aiEndpoint`,`aiCliCommand`,`aiProxyHeaders`].some(t=>e.has(t))&&(this._cachedProvider=null),e.has(`content`)&&this._editor&&(this._updatingFromEditor?this._updatingFromEditor=!1:this._editor.commands.setContent(this.content,{emitUpdate:!1}))}connectedCallback(){super.connectedCallback(),this.style.display||(this.style.display=`block`),this.hasUpdated&&!this._editor&&this._initEditor()}disconnectedCallback(){super.disconnectedCallback(),this._errorToastTimer&&=(clearTimeout(this._errorToastTimer),null),this._successTimer&&=(clearTimeout(this._successTimer),null),document.removeEventListener(`keydown`,this._boundEscapeHandler),(this._editor?.storage)?.aiExecute?.abortController?.abort(),this.renderRoot.querySelector(`.editor`)?.classList.remove(`ai-executing`),this._editor?.destroy(),this._editor=null}_handleEscapeCancel(e){if(e.key!==`Escape`||!this._editor)return;let t=this._editor.storage.aiExecute;t?.abortController&&!t.abortController.signal.aborted&&(t.abortController.abort(),t.abortController=null,this._editor.setEditable(!0,!1),this.renderRoot.querySelector(`.editor`)?.classList.remove(`ai-executing`),e.preventDefault())}getMarkdown(){return this._editor?this._editor.storage.markdown.getMarkdown():``}_showCompletionSequence(e){e.classList.add(`ai-completing`),setTimeout(()=>{e.classList.remove(`ai-completing`),this._showSuccess=!0,this._successTimer=setTimeout(()=>{this._showSuccess=!1,this._successTimer=null},2e3)},300)}_initEditor(){let e=this.renderRoot.querySelector(`.editor`);e&&(this._editor=new r.Editor({element:e,extensions:[i.default,a.Markdown.configure({html:!1,tightLists:!0}),o.default,s.default.configure({openOnClick:!1,HTMLAttributes:{rel:`noopener noreferrer`}}),U,c.Table,l.default,u.default,d.default,D.configure({...this.aiShortcut?{shortcut:this.aiShortcut}:{}}),O,A,N.configure({...this.aiExecuteShortcut?{shortcut:this.aiExecuteShortcut}:{},getProvider:()=>this.getActiveProvider(),onExecutionStateChange:t=>{e.classList.toggle(`ai-executing`,t),t?(this._showSuccess=!1,document.addEventListener(`keydown`,this._boundEscapeHandler)):document.removeEventListener(`keydown`,this._boundEscapeHandler)},onError:e=>{this._errorToastTimer&&clearTimeout(this._errorToastTimer),this._errorMessage=e.message,this._errorToastTimer=setTimeout(()=>{this._errorMessage=null,this._errorToastTimer=null},5e3)}})],content:this.content,injectCSS:!1,onUpdate:({editor:e})=>{let t=e.storage.markdown.getMarkdown();this._updatingFromEditor=!0,this.content=t,this.dispatchEvent(new CustomEvent(`content-changed`,{detail:{content:t},bubbles:!0,composed:!0}))}}),this._editor.view.dom.addEventListener(`ai-completed`,()=>{this._showCompletionSequence(e)}))}};H([(0,n.property)({type:String})],W.prototype,`content`,void 0),H([(0,n.property)({type:String,attribute:`ai-shortcut`})],W.prototype,`aiShortcut`,void 0),H([(0,n.property)({type:String,attribute:`ai-execute-shortcut`})],W.prototype,`aiExecuteShortcut`,void 0),H([(0,n.property)({type:String,attribute:`ai-provider`})],W.prototype,`aiProviderName`,void 0),H([(0,n.property)({type:String,attribute:`ai-endpoint`})],W.prototype,`aiEndpoint`,void 0),H([(0,n.property)({type:String,attribute:`ai-cli-command`})],W.prototype,`aiCliCommand`,void 0),H([(0,n.property)({type:String,attribute:`ai-proxy-headers`})],W.prototype,`aiProxyHeaders`,void 0),H([(0,n.state)()],W.prototype,`_errorMessage`,void 0),H([(0,n.state)()],W.prototype,`_showSuccess`,void 0),W=H([(0,n.customElement)(`md-compleat`)],W),Object.defineProperty(e,`MdCompleat`,{enumerable:!0,get:function(){return W}}),e.VERSION=`0.0.1`,e.createProvider=V});

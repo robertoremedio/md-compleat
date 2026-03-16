@@ -645,17 +645,29 @@ var G = l.create({
 	static {
 		this.styles = r`
     :host {
+      color-scheme: light dark;
       --md-compleat-font-family: system-ui, -apple-system, sans-serif;
       --md-compleat-font-mono: ui-monospace, 'SFMono-Regular', 'SF Mono',
         Menlo, Consolas, monospace;
       --md-compleat-max-width: 65ch;
       --md-compleat-max-height: none;
       --md-compleat-focus-outline: 2px solid highlight;
-      --md-compleat-code-bg: rgba(0, 0, 0, 0.06);
-      --md-compleat-blockquote-border: 3px solid rgba(0, 0, 0, 0.2);
-      --md-compleat-hr-color: rgba(0, 0, 0, 0.15);
-      --md-compleat-table-border: 1px solid rgba(0, 0, 0, 0.15);
-      --md-compleat-link-color: #1a6be0;
+      --md-compleat-code-bg: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.08));
+      --md-compleat-blockquote-border: 3px solid light-dark(rgba(0, 0, 0, 0.2), rgba(255, 255, 255, 0.2));
+      --md-compleat-hr-color: light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.15));
+      --md-compleat-table-border: 1px solid light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.15));
+      --md-compleat-link-color: light-dark(#1a6be0, #5b9cf0);
+      --md-compleat-ai-highlight: light-dark(rgba(74, 144, 226, 0.15), rgba(74, 144, 226, 0.25));
+      --md-compleat-ai-chip-bg: light-dark(#f0e6ff, #2d1f4e);
+      --md-compleat-ai-chip-border: #7c3aed;
+      --_muted: light-dark(rgba(0, 0, 0, 0.4), rgba(255, 255, 255, 0.4));
+      --_muted-strong: light-dark(rgba(0, 0, 0, 0.65), rgba(255, 255, 255, 0.65));
+      --_muted-hover: light-dark(rgba(0, 0, 0, 0.7), rgba(255, 255, 255, 0.7));
+      --_surface: light-dark(#fff, #1e1e1e);
+      --_surface-hover: light-dark(#f0e6ff, #2d1f4e);
+      --_border: light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.15));
+      --_shadow: light-dark(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.4));
+      --_success: light-dark(#16a34a, #4ade80);
       display: block;
     }
 
@@ -748,7 +760,7 @@ var G = l.create({
       border-left: var(--md-compleat-blockquote-border);
       margin: 0.75em 0;
       padding-left: 1em;
-      color: rgba(0, 0, 0, 0.65);
+      color: var(--_muted-strong);
     }
 
     /* Lists */
@@ -820,7 +832,7 @@ var G = l.create({
     }
 
     .ai-chip__icon {
-      color: rgba(0, 0, 0, 0.4);
+      color: var(--_muted);
       margin-right: 0.5em;
       flex-shrink: 0;
     }
@@ -838,20 +850,20 @@ var G = l.create({
       padding: 0 0.25em;
       margin-right: 0.25em;
       font-size: 1em;
-      color: rgba(0, 0, 0, 0.4);
+      color: var(--_muted);
       flex-shrink: 0;
     }
 
     .ai-chip__toggle:hover {
-      color: rgba(0, 0, 0, 0.7);
+      color: var(--_muted-hover);
     }
 
     .ai-suggestion {
       position: absolute;
-      background: #fff;
-      border: 1px solid rgba(0, 0, 0, 0.15);
+      background: var(--_surface);
+      border: 1px solid var(--_border);
       border-radius: 4px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 2px 8px var(--_shadow);
       padding: 0.5em 0.75em;
       cursor: pointer;
       z-index: 10;
@@ -860,7 +872,7 @@ var G = l.create({
     }
 
     .ai-suggestion:hover {
-      background: #f0e6ff;
+      background: var(--_surface-hover);
     }
 
     /* AI execution state */
@@ -891,7 +903,7 @@ var G = l.create({
       top: 6px;
       right: 8px;
       font-size: 0.75em;
-      color: rgba(0, 0, 0, 0.45);
+      color: var(--_muted);
       z-index: 10;
     }
 
@@ -958,7 +970,7 @@ var G = l.create({
       align-items: center;
       gap: 4px;
       font-size: 0.75em;
-      color: rgba(0, 0, 0, 0.55);
+      color: var(--_muted-strong);
       z-index: 20;
       animation: md-compleat-success-toast-in 0.2s ease-out;
     }
@@ -966,7 +978,7 @@ var G = l.create({
     .ai-success-toast svg {
       width: 14px;
       height: 14px;
-      color: #16a34a;
+      color: var(--_success);
     }
 
   `;
