@@ -1,0 +1,41 @@
+src/extensions/ai-execute.ts
+  0c4379c4b8595dfd 218
+eslint.config.js
+  0c4379c4b8595dfd 1-16
+.github/workflows/ci.yml
+  0c4379c4b8595dfd 19
+src/__tests__/ai-execute.test.ts
+  0c4379c4b8595dfd 232
+package.json
+  0c4379c4b8595dfd 26
+src/extensions/ai-directive.ts
+  0c4379c4b8595dfd 46,157
+src/__tests__/css-template-indentation.test.ts
+  0c4379c4b8595dfd 30
+src/__tests__/ai-highlight.test.ts
+  0c4379c4b8595dfd 1
+src/__tests__/ai-directive-chip.test.ts
+  0c4379c4b8595dfd 1
+src/__tests__/ai-provider.test.ts
+  0c4379c4b8595dfd 590
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "1e0da945f313c8a59a28e65bc594f92f19b5cac8",
+  "prompts": {
+    "0c4379c4b8595dfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6184387b-bb41-4f36-8a1e-cbebb40a52ab",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 32,
+      "total_deletions": 24,
+      "accepted_lines": 26,
+      "overriden_lines": 0
+    }
+  }
+}
