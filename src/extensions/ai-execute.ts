@@ -215,6 +215,7 @@ export const AiExecute = Extension.create<AiExecuteOptions>({
   },
 
   addProseMirrorPlugins() {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const ext = this;
     const notifyStateChange = (executing: boolean) => {
       const cb =

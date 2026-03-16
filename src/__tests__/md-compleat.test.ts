@@ -18,15 +18,6 @@ async function createElement(attributes: Record<string, string> = {}): Promise<M
 }
 
 /**
- * Helper: create a mock AiProvider.
- */
-function mockProvider(result = '# AI Response'): AiProvider {
-  return {
-    execute: vi.fn().mockResolvedValue(result),
-  };
-}
-
-/**
  * Helper: simulate a keyboard shortcut on the editor.
  */
 function triggerShortcut(

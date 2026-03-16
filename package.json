@@ -23,6 +23,7 @@
     "custom-elements.json"
   ],
   "scripts": {
+    "lint": "eslint src/",
     "dev": "vite dev",
     "build": "vite build && vite build --config vite.standalone.config.ts && tsc && cem analyze --litelement --globs \"src/md-compleat.ts\"",
     "analyze": "cem analyze --litelement --globs \"src/md-compleat.ts\"",
@@ -43,11 +44,14 @@
   },
   "devDependencies": {
     "@custom-elements-manifest/analyzer": "^0.11.0",
+    "@eslint/js": "^10.0.1",
     "@open-wc/testing": "^4.0.0",
     "@types/shell-quote": "^1.7.5",
     "@vitest/coverage-v8": "^4.1.0",
+    "eslint": "^10.0.3",
     "jsdom": "^29.0.0",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.0",
     "vite": "^8.0.0",
     "vitest": "^4.1.0"
   },

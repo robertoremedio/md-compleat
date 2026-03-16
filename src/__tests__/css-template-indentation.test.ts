@@ -27,7 +27,7 @@ describe('css template literal indentation', () => {
 
     const closingLine = lines[closingIndex];
     // The line should start with exactly 2 spaces before the backtick
-    expect(closingLine).toMatch(/^  `;\s*$/);
+    expect(closingLine).toMatch(/^ {2}`;\s*$/);
   });
 
   it('closing backtick aligns with other class-level members', () => {

@@ -43,7 +43,7 @@ export const AiDirective = Node.create<AiDirectiveOptions>({
             // Move all children after the first <ai> to be siblings
             const parent = el.parentNode;
             if (parent) {
-              let sibling = el.nextSibling;
+              const sibling = el.nextSibling;
               // Move all child nodes out after this element
               while (el.firstChild) {
                 parent.insertBefore(el.firstChild, sibling);
@@ -154,7 +154,7 @@ export const AiDirective = Node.create<AiDirectiveOptions>({
                 }
 
                 // Block form: find </ai> on same or subsequent lines
-                let nextLine = startLine;
+                let nextLine;
                 for (nextLine = startLine; nextLine < endLine; nextLine++) {
                   const lpos = state.bMarks[nextLine] + state.tShift[nextLine];
                   const lmax = state.eMarks[nextLine];

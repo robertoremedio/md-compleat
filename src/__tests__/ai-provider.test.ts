@@ -586,10 +586,8 @@ describe('MdCompleat AI attributes', () => {
   async function createElement(
     attributes: Record<string, string> = {},
   ) {
-    const { MdCompleat } = await import('../md-compleat.js');
-    const el = document.createElement('md-compleat') as InstanceType<
-      typeof MdCompleat
-    >;
+    await import('../md-compleat.js');
+    const el = document.createElement('md-compleat') as any;
     for (const [key, value] of Object.entries(attributes)) {
       el.setAttribute(key, value);
     }

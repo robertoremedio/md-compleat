@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { MdCompleat } from '../md-compleat.js';
 import type { AiProvider } from '../ai/provider.js';
 
@@ -229,7 +229,7 @@ describe('AiExecute Escape cancellation', () => {
   it('allows new execution after cancellation', async () => {
     let callCount = 0;
     const provider: AiProvider = {
-      execute: vi.fn().mockImplementation((_doc, signal) => {
+      execute: vi.fn().mockImplementation((_doc, _signal) => {
         callCount++;
         if (callCount === 1) {
           return new Promise(() => {}); // First call never resolves
