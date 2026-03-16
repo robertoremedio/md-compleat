@@ -1008,3 +1008,162 @@ describe('AiExecute disconnect cleanup', () => {
     expect(editorDiv!.classList.contains('ai-executing')).toBe(false);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Success feedback: visual confirmation after AI completion
+// ---------------------------------------------------------------------------
+describe('AiExecute success feedback', () => {
+  it('shows success toast after successful AI execution', async () => {
+    const provider = mockProvider('# AI Result');
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    // Wait for execution + completion sequence (~300ms animation fallback + buffer)
+    await new Promise((r) => setTimeout(r, 500));
+    await el.updateComplete;
+
+    const toast = el.shadowRoot!.querySelector('.ai-success-toast');
+    expect(toast).not.toBeNull();
+  });
+
+  it('auto-dismisses success toast after 2 seconds', async () => {
+    vi.useFakeTimers();
+
+    const provider = mockProvider('# AI Result');
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    // Advance past execution + completion sequence
+    await vi.advanceTimersByTimeAsync(500);
+    await el.updateComplete;
+
+    // Toast should be visible
+    expect(el.shadowRoot!.querySelector('.ai-success-toast')).not.toBeNull();
+
+    // Advance past 2-second auto-dismiss
+    await vi.advanceTimersByTimeAsync(2000);
+    await el.updateComplete;
+
+    // Toast should be gone
+    expect(el.shadowRoot!.querySelector('.ai-success-toast')).toBeNull();
+
+    vi.useRealTimers();
+  });
+
+  it('adds .ai-completing class to .editor div on completion', async () => {
+    let resolveExecution: (value: string) => void;
+    const provider: AiProvider = {
+      execute: vi.fn().mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveExecution = resolve;
+          }),
+      ),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Resolve the provider — triggers completion sequence
+    resolveExecution!('# Done');
+    await new Promise((r) => setTimeout(r, 50));
+
+    const editorDiv = el.shadowRoot!.querySelector('.editor')!;
+    expect(editorDiv.classList.contains('ai-completing')).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Success feedback: negative paths and cleanup
+// ---------------------------------------------------------------------------
+describe('AiExecute success feedback negative paths', () => {
+  it('does NOT show success toast after provider error', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockRejectedValue(new Error('provider failure')),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 500));
+    await el.updateComplete;
+
+    const toast = el.shadowRoot!.querySelector('.ai-success-toast');
+    expect(toast).toBeNull();
+  });
+
+  it('does NOT show success toast after Escape cancellation', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockReturnValue(new Promise(() => {})),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 50));
+
+    triggerShortcut(el, 'Escape');
+    await new Promise((r) => setTimeout(r, 500));
+    await el.updateComplete;
+
+    const toast = el.shadowRoot!.querySelector('.ai-success-toast');
+    expect(toast).toBeNull();
+  });
+
+  it('cleans up success toast timer on disconnectedCallback', async () => {
+    vi.useFakeTimers();
+
+    const provider = mockProvider('# AI Result');
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    // Advance past execution + completion sequence to show toast
+    await vi.advanceTimersByTimeAsync(500);
+    await el.updateComplete;
+
+    // Toast should be visible
+    expect(el.shadowRoot!.querySelector('.ai-success-toast')).not.toBeNull();
+
+    // Disconnect element — should clean up timer without errors
+    document.body.removeChild(el);
+    await vi.advanceTimersByTimeAsync(3000);
+
+    // No errors thrown — timer was properly cleaned up
+    vi.useRealTimers();
+  });
+});
