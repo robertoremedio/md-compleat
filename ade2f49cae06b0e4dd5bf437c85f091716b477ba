@@ -1,0 +1,29 @@
+src/__tests__/ai-content-replace.test.ts
+  5963beb03fe49a49 1-330
+src/__tests__/parse-markdown.test.ts
+  5963beb03fe49a49 1-99
+src/__tests__/diff-docs.test.ts
+  5963beb03fe49a49 1-132
+src/__tests__/ai-highlight.test.ts
+  5963beb03fe49a49 1-136
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "ade2f49cae06b0e4dd5bf437c85f091716b477ba",
+  "prompts": {
+    "5963beb03fe49a49": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fd7cf9fd-ae19-4452-a317-ce6b6259db49",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 697,
+      "total_deletions": 0,
+      "accepted_lines": 697,
+      "overriden_lines": 0
+    }
+  }
+}
