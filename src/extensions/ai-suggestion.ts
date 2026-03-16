@@ -13,7 +13,7 @@ export const AiSuggestion = Extension.create({
     let triggerFrom = -1;
 
     function getEditorRoot(): HTMLElement {
-      return editor.options.element;
+      return editor.options.element as HTMLElement;
     }
 
     function show(coords: { left: number; top: number; bottom: number }) {

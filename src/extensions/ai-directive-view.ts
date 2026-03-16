@@ -75,7 +75,7 @@ export function aiDirectiveNodeView({ node, editor, getPos }: NodeViewRendererPr
       showDisplay();
     };
 
-    input.addEventListener('keydown', (e: KeyboardEvent) => {
+    input.addEventListener('keydown', ((e: KeyboardEvent) => {
       if (e.key === 'Enter' && !isBlock) {
         e.preventDefault();
         input.removeEventListener('blur', commit);
@@ -85,7 +85,7 @@ export function aiDirectiveNodeView({ node, editor, getPos }: NodeViewRendererPr
         input.removeEventListener('blur', commit);
         revert();
       }
-    });
+    }) as EventListener);
 
     instructionEl.replaceWith(input);
 

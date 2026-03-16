@@ -488,7 +488,7 @@ export class MdCompleat extends LitElement {
       this._successTimer = null;
     }
     document.removeEventListener('keydown', this._boundEscapeHandler);
-    this._editor?.storage.aiExecute?.abortController?.abort();
+    (this._editor?.storage as any)?.aiExecute?.abortController?.abort();
     this.renderRoot.querySelector('.editor')?.classList.remove('ai-executing');
     this._editor?.destroy();
     this._editor = null;
@@ -496,7 +496,7 @@ export class MdCompleat extends LitElement {
 
   private _handleEscapeCancel(event: KeyboardEvent) {
     if (event.key !== 'Escape' || !this._editor) return;
-    const storage = this._editor.storage.aiExecute;
+    const storage = (this._editor.storage as any).aiExecute;
     if (storage?.abortController && !storage.abortController.signal.aborted) {
       storage.abortController.abort();
       storage.abortController = null;
@@ -509,7 +509,7 @@ export class MdCompleat extends LitElement {
 
   getMarkdown(): string {
     if (!this._editor) return '';
-    return this._editor.storage.markdown.getMarkdown();
+    return (this._editor.storage as any).markdown.getMarkdown();
   }
 
   private _showCompletionSequence(element: Element) {
@@ -578,7 +578,7 @@ export class MdCompleat extends LitElement {
       content: this.content,
       injectCSS: false,
       onUpdate: ({ editor }) => {
-        const newContent = editor.storage.markdown.getMarkdown();
+        const newContent = (editor.storage as any).markdown.getMarkdown();
         this._updatingFromEditor = true;
         this.content = newContent;
         this.dispatchEvent(

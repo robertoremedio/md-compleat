@@ -71,7 +71,7 @@ export const AiExecute = Extension.create<AiExecuteOptions>({
         }
 
         // Serialize and execute
-        const markdown = editor.storage.markdown.getMarkdown();
+        const markdown = (editor.storage as any).markdown.getMarkdown();
         const oldDoc = editor.state.doc;
         const controller = new AbortController();
         this.storage.abortController = controller;

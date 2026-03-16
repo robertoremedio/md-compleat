@@ -7,7 +7,7 @@ import type { Node } from '@tiptap/pm/model';
  * markdown parser and schema, without dispatching any transactions.
  */
 export function parseMarkdown(editor: Editor, markdown: string): Node {
-  const markdownStorage = editor.storage.markdown;
+  const markdownStorage = (editor.storage as any).markdown;
   // tiptap-markdown's parser.parse() returns an HTML string
   const htmlString = markdownStorage.parser.parse(markdown);
 

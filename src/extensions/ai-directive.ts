@@ -81,7 +81,7 @@ export const AiDirective = Node.create<AiDirectiveOptions>({
     return {
       insertAiDirective:
         (attrs: { instruction: string; variant?: string }) =>
-        ({ commands }: any) => {
+        ({ commands }: { commands: any }) => {
           return commands.insertContent({
             type: 'aiDirective',
             attrs: {
@@ -90,12 +90,12 @@ export const AiDirective = Node.create<AiDirectiveOptions>({
             },
           });
         },
-    };
+    } as any;
   },
 
   addKeyboardShortcuts() {
     return {
-      [this.options.shortcut]: ({ editor }) => {
+      [this.options.shortcut]: ({ editor }: { editor: any }) => {
         editor.commands.insertAiDirective({ instruction: '' });
         return true;
       },

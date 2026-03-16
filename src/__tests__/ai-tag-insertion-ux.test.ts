@@ -102,7 +102,7 @@ describe('keyboard shortcut for AI directive insertion', () => {
     // Wait for queueMicrotask in NodeView to fire enterEditMode, but NOT
     // for the setTimeout inside it (which calls focus and can trigger a
     // spurious blur → commit → input removal when parallel tests steal focus).
-    await new Promise((resolve) => queueMicrotask(resolve));
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
 
     const json = editor.getJSON();
     const aiNode = json.content?.find((n: any) => n.type === 'aiDirective');
