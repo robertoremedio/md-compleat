@@ -1,12 +1,9 @@
 import type { AiProvider } from './provider.js';
-import { HttpProvider, anthropicAdapter, openaiAdapter } from './http-provider.js';
 import { CliProvider } from './providers/cli.js';
 import { ProxyProvider } from './providers/proxy.js';
 
 export function createProvider(config: {
   provider?: string;
-  model?: string;
-  apiKey?: string;
   endpoint?: string;
   cliCommand?: string;
   proxyHeaders?: string;
@@ -16,10 +13,6 @@ export function createProvider(config: {
   }
 
   switch (config.provider) {
-    case 'anthropic':
-      return new HttpProvider(config, anthropicAdapter);
-    case 'openai':
-      return new HttpProvider(config, openaiAdapter);
     case 'cli':
       return new CliProvider(config);
     case 'proxy':

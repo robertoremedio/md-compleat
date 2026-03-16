@@ -387,8 +387,6 @@ export class MdCompleat extends LitElement {
   @property({ type: String, attribute: 'ai-shortcut' }) aiShortcut = '';
   @property({ type: String, attribute: 'ai-execute-shortcut' }) aiExecuteShortcut = '';
   @property({ type: String, attribute: 'ai-provider' }) aiProviderName = '';
-  @property({ type: String, attribute: 'ai-model' }) aiModel = '';
-  @property({ type: String, attribute: 'ai-api-key' }) aiApiKey = '';
   @property({ type: String, attribute: 'ai-endpoint' }) aiEndpoint = '';
   @property({ type: String, attribute: 'ai-cli-command' }) aiCliCommand = '';
   @property({ type: String, attribute: 'ai-proxy-headers' }) aiProxyHeaders = '';
@@ -402,6 +400,7 @@ export class MdCompleat extends LitElement {
   private _cachedProvider: AiProvider | null = null;
   private _errorToastTimer: ReturnType<typeof setTimeout> | null = null;
   private _successTimer: ReturnType<typeof setTimeout> | null = null;
+  private _boundEscapeHandler = this._handleEscapeCancel.bind(this);
 
   set aiProvider(provider: AiProvider | null) {
     this._aiProvider = provider;
@@ -419,8 +418,6 @@ export class MdCompleat extends LitElement {
     if (!this._cachedProvider) {
       this._cachedProvider = createProvider({
         provider: this.aiProviderName,
-        apiKey: this.aiApiKey,
-        model: this.aiModel,
         endpoint: this.aiEndpoint,
         cliCommand: this.aiCliCommand,
         proxyHeaders: this.aiProxyHeaders,
@@ -442,7 +439,7 @@ export class MdCompleat extends LitElement {
   }
 
   override updated(changedProperties: Map<string, unknown>) {
-    const aiKeys = ['aiProviderName', 'aiApiKey', 'aiModel', 'aiEndpoint', 'aiCliCommand', 'aiProxyHeaders'];
+    const aiKeys = ['aiProviderName', 'aiEndpoint', 'aiCliCommand', 'aiProxyHeaders'];
     if (aiKeys.some(k => changedProperties.has(k))) {
       this._cachedProvider = null;
     }
@@ -475,10 +472,24 @@ export class MdCompleat extends LitElement {
       clearTimeout(this._successTimer);
       this._successTimer = null;
     }
+    document.removeEventListener('keydown', this._boundEscapeHandler);
     this._editor?.storage.aiExecute?.abortController?.abort();
     this.renderRoot.querySelector('.editor')?.classList.remove('ai-executing');
     this._editor?.destroy();
     this._editor = null;
+  }
+
+  private _handleEscapeCancel(event: KeyboardEvent) {
+    if (event.key !== 'Escape' || !this._editor) return;
+    const storage = this._editor.storage.aiExecute;
+    if (storage?.abortController && !storage.abortController.signal.aborted) {
+      storage.abortController.abort();
+      storage.abortController = null;
+      this._editor.setEditable(true, false);
+      const element = this.renderRoot.querySelector('.editor');
+      element?.classList.remove('ai-executing');
+      event.preventDefault();
+    }
   }
 
   getMarkdown(): string {
@@ -532,6 +543,9 @@ export class MdCompleat extends LitElement {
             (element as HTMLElement).classList.toggle('ai-executing', executing);
             if (executing) {
               this._showSuccess = false;
+              document.addEventListener('keydown', this._boundEscapeHandler);
+            } else {
+              document.removeEventListener('keydown', this._boundEscapeHandler);
             }
           },
           onError: (error: Error) => {

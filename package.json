@@ -16,7 +16,7 @@
     "dist"
   ],
   "scripts": {
-    "dev": "vite serve dev",
+    "dev": "vite dev",
     "build": "vite build && tsc",
     "test": "vitest run --passWithNoTests"
   },
