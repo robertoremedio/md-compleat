@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 
 // Import the component — this will fail until src/md-compleat.ts exists
 import { MdCompleat } from '../md-compleat.js';
+import type { AiProvider } from '../ai/provider.js';
 
 /**
  * Helper: create a component, attach to DOM, and wait for Lit's updateComplete.
@@ -16,7 +17,37 @@ async function createElement(attributes: Record<string, string> = {}): Promise<M
   return el;
 }
 
+/**
+ * Helper: create a mock AiProvider.
+ */
+function mockProvider(result = '# AI Response'): AiProvider {
+  return {
+    execute: vi.fn().mockResolvedValue(result),
+  };
+}
+
+/**
+ * Helper: simulate a keyboard shortcut on the editor.
+ */
+function triggerShortcut(
+  el: MdCompleat,
+  key: string,
+  modifiers: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean } = {},
+) {
+  const editor = (el as any)._editor!;
+  const editorEl = editor.view.dom as HTMLElement;
+  editorEl.dispatchEvent(
+    new KeyboardEvent('keydown', {
+      key,
+      bubbles: true,
+      cancelable: true,
+      ...modifiers,
+    }),
+  );
+}
+
 afterEach(() => {
+  vi.useRealTimers();
   // Clean up any elements added to the DOM
   document.body.innerHTML = '';
 });
@@ -221,5 +252,193 @@ describe('base styles', () => {
     const el = await createElement();
     const editorDiv = el.shadowRoot!.querySelector('.editor');
     expect(editorDiv).toBeInstanceOf(HTMLDivElement);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Step 8: Error toast UI
+// ---------------------------------------------------------------------------
+describe('error toast', () => {
+  it('shows error toast in shadow DOM after provider error', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockRejectedValue(new Error('provider failure')),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+    await el.updateComplete;
+
+    const toast = el.shadowRoot!.querySelector('.ai-error-toast');
+    expect(toast).not.toBeNull();
+    expect(toast!.textContent).toContain('provider failure');
+  });
+
+  it('auto-dismisses error toast after 5 seconds', async () => {
+    vi.useFakeTimers();
+
+    const provider: AiProvider = {
+      execute: vi.fn().mockRejectedValue(new Error('timeout error')),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    // Flush microtasks for the rejected promise
+    await vi.advanceTimersByTimeAsync(100);
+    await el.updateComplete;
+
+    // Toast should be visible
+    expect(el.shadowRoot!.querySelector('.ai-error-toast')).not.toBeNull();
+
+    // Advance past 5 seconds
+    await vi.advanceTimersByTimeAsync(5000);
+    await el.updateComplete;
+
+    // Toast should be gone
+    expect(el.shadowRoot!.querySelector('.ai-error-toast')).toBeNull();
+  });
+
+  it('shows toast for empty response error', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockResolvedValue(''),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+    await el.updateComplete;
+
+    const toast = el.shadowRoot!.querySelector('.ai-error-toast');
+    expect(toast).not.toBeNull();
+  });
+
+  it('shows toast for parse error', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockResolvedValue(null as any),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+    await el.updateComplete;
+
+    const toast = el.shadowRoot!.querySelector('.ai-error-toast');
+    expect(toast).not.toBeNull();
+  });
+
+  it('does NOT show toast on AbortError (user cancel)', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockImplementation((_doc, signal) => {
+        return new Promise((_resolve, reject) => {
+          signal.addEventListener('abort', () => {
+            reject(new DOMException('Aborted', 'AbortError'));
+          });
+        });
+      }),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 50));
+
+    triggerShortcut(el, 'Escape');
+    await new Promise((r) => setTimeout(r, 50));
+    await el.updateComplete;
+
+    const toast = el.shadowRoot!.querySelector('.ai-error-toast');
+    expect(toast).toBeNull();
+  });
+
+  it('cleans up toast timer on disconnectedCallback', async () => {
+    vi.useFakeTimers();
+
+    const provider: AiProvider = {
+      execute: vi.fn().mockRejectedValue(new Error('fail')),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.advanceTimersByTimeAsync(100);
+    await el.updateComplete;
+
+    // Toast should be showing
+    expect(el.shadowRoot!.querySelector('.ai-error-toast')).not.toBeNull();
+
+    // Disconnect — should clean up timer without errors
+    document.body.removeChild(el);
+
+    // Advancing timers should not throw
+    expect(() => vi.advanceTimersByTimeAsync(5000)).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Step 9: ai-error event on component
+// ---------------------------------------------------------------------------
+describe('ai-error event on component', () => {
+  it('emits ai-error event that crosses shadow DOM boundary', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockRejectedValue(new Error('provider failure')),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    const errorHandler = vi.fn();
+    // Listen on the host element (outside shadow DOM)
+    el.addEventListener('ai-error', errorHandler);
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(errorHandler).toHaveBeenCalledTimes(1);
+    const event = errorHandler.mock.calls[0][0] as CustomEvent;
+    expect(event.detail.error).toBeInstanceOf(Error);
+    expect(event.detail.type).toBe('provider');
   });
 });

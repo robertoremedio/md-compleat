@@ -613,6 +613,366 @@ describe('AiExecute .ai-executing class', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Step 11: ai-error event emission on provider error
+// ---------------------------------------------------------------------------
+describe('AiExecute ai-error event', () => {
+  it('emits ai-error event on provider error with correct detail', async () => {
+    const providerError = new Error('provider failure');
+    const provider: AiProvider = {
+      execute: vi.fn().mockRejectedValue(providerError),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    const errorHandler = vi.fn();
+    editor.view.dom.addEventListener('ai-error', errorHandler);
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(errorHandler).toHaveBeenCalledTimes(1);
+    const event = errorHandler.mock.calls[0][0] as CustomEvent;
+    expect(event.detail.error).toBe(providerError);
+    expect(event.detail.type).toBe('provider');
+  });
+
+  it('ai-error event bubbles and is composed', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockRejectedValue(new Error('fail')),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    const errorHandler = vi.fn();
+    editor.view.dom.addEventListener('ai-error', errorHandler);
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    const event = errorHandler.mock.calls[0][0] as CustomEvent;
+    expect(event.bubbles).toBe(true);
+    expect(event.composed).toBe(true);
+  });
+
+  it('does NOT emit ai-error on AbortError', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockImplementation((_doc, signal) => {
+        return new Promise((_resolve, reject) => {
+          signal.addEventListener('abort', () => {
+            const abortError = new DOMException('Aborted', 'AbortError');
+            reject(abortError);
+          });
+        });
+      }),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    const errorHandler = vi.fn();
+    editor.view.dom.addEventListener('ai-error', errorHandler);
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Cancel via Escape
+    triggerShortcut(el, 'Escape');
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(errorHandler).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Step 12: onError callback
+// ---------------------------------------------------------------------------
+describe('AiExecute onError callback', () => {
+  it('calls onError callback with error and type on provider error', async () => {
+    const providerError = new Error('provider failure');
+    const provider: AiProvider = {
+      execute: vi.fn().mockRejectedValue(providerError),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+
+    const onErrorSpy = vi.fn();
+    editor.storage.aiExecute.onError = onErrorSpy;
+
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(onErrorSpy).toHaveBeenCalledTimes(1);
+    expect(onErrorSpy).toHaveBeenCalledWith(providerError, 'provider');
+  });
+
+  it('does NOT call onError on AbortError', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockImplementation((_doc, signal) => {
+        return new Promise((_resolve, reject) => {
+          signal.addEventListener('abort', () => {
+            reject(new DOMException('Aborted', 'AbortError'));
+          });
+        });
+      }),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+
+    const onErrorSpy = vi.fn();
+    editor.storage.aiExecute.onError = onErrorSpy;
+
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 50));
+
+    triggerShortcut(el, 'Escape');
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(onErrorSpy).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Step 13: Empty response handling
+// ---------------------------------------------------------------------------
+describe('AiExecute empty response handling', () => {
+  it('preserves editor content when provider returns empty string', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockResolvedValue(''),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+    const originalContent = editor.storage.markdown.getMarkdown();
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(editor.storage.markdown.getMarkdown()).toBe(originalContent);
+  });
+
+  it('emits ai-error with type empty-response when provider returns empty string', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockResolvedValue(''),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    const errorHandler = vi.fn();
+    editor.view.dom.addEventListener('ai-error', errorHandler);
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(errorHandler).toHaveBeenCalledTimes(1);
+    const event = errorHandler.mock.calls[0][0] as CustomEvent;
+    expect(event.detail.type).toBe('empty-response');
+  });
+
+  it('preserves editor content when provider returns whitespace-only string', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockResolvedValue('   \n\t  '),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+    const originalContent = editor.storage.markdown.getMarkdown();
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(editor.storage.markdown.getMarkdown()).toBe(originalContent);
+  });
+
+  it('restores editor editability after empty response', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockResolvedValue(''),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(editor.isEditable).toBe(true);
+  });
+
+  it('calls onError with empty-response type on empty response', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockResolvedValue(''),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+
+    const onErrorSpy = vi.fn();
+    editor.storage.aiExecute.onError = onErrorSpy;
+
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(onErrorSpy).toHaveBeenCalledTimes(1);
+    expect(onErrorSpy.mock.calls[0][1]).toBe('empty-response');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Step 14: Parse error handling (invalid markdown)
+// ---------------------------------------------------------------------------
+describe('AiExecute parse error handling', () => {
+  it('preserves editor content when AI returns content that causes a parse error', async () => {
+    // This test uses a provider that returns content which will cause
+    // parseMarkdown to throw (implementation will validate parsed doc)
+    const provider: AiProvider = {
+      execute: vi.fn().mockResolvedValue(null as any),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+    const originalContent = editor.storage.markdown.getMarkdown();
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(editor.storage.markdown.getMarkdown()).toBe(originalContent);
+  });
+
+  it('emits ai-error with type parse on parse failure', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockResolvedValue(null as any),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    const errorHandler = vi.fn();
+    editor.view.dom.addEventListener('ai-error', errorHandler);
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(errorHandler).toHaveBeenCalledTimes(1);
+    const event = errorHandler.mock.calls[0][0] as CustomEvent;
+    expect(event.detail.type).toBe('parse');
+  });
+
+  it('restores editor editability after parse error', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockResolvedValue(null as any),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(editor.isEditable).toBe(true);
+  });
+
+  it('removes ai-executing class after parse error', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockResolvedValue(null as any),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await vi.waitFor(() => {
+      expect(provider.execute).toHaveBeenCalled();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    const editorDiv = el.shadowRoot!.querySelector('.editor')!;
+    expect(editorDiv.classList.contains('ai-executing')).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Step 10: Cleanup on disconnect during execution
 // ---------------------------------------------------------------------------
 describe('AiExecute disconnect cleanup', () => {
