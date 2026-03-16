@@ -38,7 +38,7 @@ describe('AiHighlight mark extension', () => {
     const editor = (el as any)._editor!;
 
     // Set content with text, then apply the aiHighlight mark programmatically
-    editor.commands.setContent('<p>Hello world</p>');
+    editor.commands.setContent('Hello world');
 
     // Apply aiHighlight mark to "Hello"
     const tr = editor.state.tr;
@@ -56,7 +56,7 @@ describe('AiHighlight mark extension', () => {
     const el = await createElement();
     const editor = (el as any)._editor!;
 
-    editor.commands.setContent('<p>Hello world</p>');
+    editor.commands.setContent('Hello world');
 
     // Apply aiHighlight mark to "Hello"
     const tr = editor.state.tr;
@@ -74,7 +74,7 @@ describe('AiHighlight mark extension', () => {
     const el = await createElement();
     const editor = (el as any)._editor!;
 
-    editor.commands.setContent('<p>Hello world</p>');
+    editor.commands.setContent('Hello world');
 
     // Apply aiHighlight mark
     const tr = editor.state.tr;
@@ -109,7 +109,7 @@ describe('AiHighlight mark extension', () => {
     const el = await createElement();
     const editor = (el as any)._editor!;
 
-    editor.commands.setContent('<p>Hello world</p>');
+    editor.commands.setContent('Hello world');
 
     // Apply aiHighlight mark with aiReplacement meta
     const tr = editor.state.tr;

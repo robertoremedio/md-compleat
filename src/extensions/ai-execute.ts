@@ -1,6 +1,9 @@
 import { Extension } from '@tiptap/core';
+import { closeHistory } from '@tiptap/pm/history';
 import { Plugin } from '@tiptap/pm/state';
 import type { AiProvider } from '../ai/provider.js';
+import { parseMarkdown } from '../ai/parse-markdown.js';
+import { diffDocs } from '../ai/diff-docs.js';
 
 export interface AiExecuteOptions {
   shortcut: string;
@@ -61,8 +64,10 @@ export const AiExecute = Extension.create<AiExecuteOptions>({
 
         // Serialize and execute
         const markdown = editor.storage.markdown.getMarkdown();
+        const oldDoc = editor.state.doc;
         const controller = new AbortController();
         this.storage.abortController = controller;
+        const startTime = Date.now();
 
         editor.setEditable(false, false);
         notifyStateChange(true);
@@ -73,7 +78,56 @@ export const AiExecute = Extension.create<AiExecuteOptions>({
           .then((result) => {
             if (!editor.isDestroyed) {
               editor.setEditable(true, false);
-              editor.commands.setContent(result);
+
+              // Parse the AI response into a ProseMirror doc
+              const newDoc = parseMarkdown(editor, result);
+
+              // Diff old and new to find changed regions
+              const { ranges, charactersChanged } = diffDocs(oldDoc, newDoc);
+
+              // Build a transaction to replace content (single undo step)
+              const tr = closeHistory(
+                editor.state.tr.replaceWith(
+                  0,
+                  editor.state.doc.content.size,
+                  newDoc.content,
+                ),
+              );
+              tr.setMeta('aiReplacement', true);
+              editor.view.dispatch(tr);
+
+              // Apply aiHighlight marks in a separate non-undoable
+              // transaction so undo cleanly restores original content
+              const aiHighlightMark = editor.schema.marks.aiHighlight;
+              if (aiHighlightMark && ranges.length > 0) {
+                const markTr = editor.state.tr;
+                for (const range of ranges) {
+                  markTr.addMark(
+                    range.from,
+                    range.to,
+                    aiHighlightMark.create(),
+                  );
+                }
+                markTr.setMeta('aiReplacement', true);
+                markTr.setMeta('addToHistory', false);
+                editor.view.dispatch(markTr);
+              }
+
+              // Close history after replacement to prevent next user
+              // edit from merging into the same undo group
+              editor.view.dispatch(
+                closeHistory(editor.state.tr).setMeta('aiReplacement', true),
+              );
+
+              // Emit ai-completed event
+              const duration = Date.now() - startTime;
+              editor.view.dom.dispatchEvent(
+                new CustomEvent('ai-completed', {
+                  bubbles: true,
+                  composed: true,
+                  detail: { duration, charactersChanged },
+                }),
+              );
             }
           })
           .catch((err) => {

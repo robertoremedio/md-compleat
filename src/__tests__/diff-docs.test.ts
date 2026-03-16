@@ -37,8 +37,8 @@ describe('diffDocs utility', () => {
     const el = await createElement();
     const editor = (el as any)._editor!;
 
-    const doc1 = getDocFromContent(editor, '<p>Hello world</p>');
-    const doc2 = getDocFromContent(editor, '<p>Hello world</p>');
+    const doc1 = getDocFromContent(editor, 'Hello world');
+    const doc2 = getDocFromContent(editor, 'Hello world');
 
     const result = diffDocs(doc1, doc2);
 
@@ -50,8 +50,8 @@ describe('diffDocs utility', () => {
     const el = await createElement();
     const editor = (el as any)._editor!;
 
-    const doc1 = getDocFromContent(editor, '<p>Hello world</p>');
-    const doc2 = getDocFromContent(editor, '<p>Hello earth</p>');
+    const doc1 = getDocFromContent(editor, 'Hello world');
+    const doc2 = getDocFromContent(editor, 'Hello earth');
 
     const result = diffDocs(doc1, doc2);
 
@@ -70,10 +70,10 @@ describe('diffDocs utility', () => {
     const el = await createElement();
     const editor = (el as any)._editor!;
 
-    const doc1 = getDocFromContent(editor, '<p>First paragraph</p>');
+    const doc1 = getDocFromContent(editor, 'First paragraph');
     const doc2 = getDocFromContent(
       editor,
-      '<p>First paragraph</p><p>Second paragraph</p>',
+      'First paragraph\n\nSecond paragraph',
     );
 
     const result = diffDocs(doc1, doc2);
@@ -88,9 +88,9 @@ describe('diffDocs utility', () => {
 
     const doc1 = getDocFromContent(
       editor,
-      '<p>First paragraph</p><p>Second paragraph</p>',
+      'First paragraph\n\nSecond paragraph',
     );
-    const doc2 = getDocFromContent(editor, '<p>First paragraph</p>');
+    const doc2 = getDocFromContent(editor, 'First paragraph');
 
     const result = diffDocs(doc1, doc2);
 
@@ -102,10 +102,10 @@ describe('diffDocs utility', () => {
     const el = await createElement();
     const editor = (el as any)._editor!;
 
-    const doc1 = getDocFromContent(editor, '<p>Original content here</p>');
+    const doc1 = getDocFromContent(editor, 'Original content here');
     const doc2 = getDocFromContent(
       editor,
-      '<p>Completely different text</p><p>With multiple paragraphs</p>',
+      'Completely different text\n\nWith multiple paragraphs',
     );
 
     const result = diffDocs(doc1, doc2);
@@ -118,8 +118,8 @@ describe('diffDocs utility', () => {
     const el = await createElement();
     const editor = (el as any)._editor!;
 
-    const doc1 = getDocFromContent(editor, '<p>Hello world</p>');
-    const doc2 = getDocFromContent(editor, '<p>Hello brave new world</p>');
+    const doc1 = getDocFromContent(editor, 'Hello world');
+    const doc2 = getDocFromContent(editor, 'Hello brave new world');
 
     const result = diffDocs(doc1, doc2);
 

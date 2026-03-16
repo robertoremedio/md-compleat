@@ -56,7 +56,14 @@ async function waitForExecution(provider: AiProvider) {
   await new Promise((r) => setTimeout(r, 50));
 }
 
-afterEach(() => {
+afterEach(async () => {
+  // Destroy editors before removing DOM to prevent async cursor errors
+  document.querySelectorAll('md-compleat').forEach((el: any) => {
+    el._editor?.destroy();
+    el._editor = null;
+  });
+  // Allow pending microtasks/timers to settle
+  await new Promise((r) => setTimeout(r, 0));
   document.body.innerHTML = '';
 });
 
@@ -89,7 +96,7 @@ describe('AiExecute content replacement pipeline', () => {
 
     const editor = (el as any)._editor!;
     editor.commands.setContent(
-      '<p>Some text</p><ai instruction="summarize" />',
+      'Some text\n\n<ai instruction="summarize" />',
     );
 
     triggerShortcut(el, 'Enter', { ctrlKey: true });
@@ -113,7 +120,7 @@ describe('AiExecute content replacement pipeline', () => {
 
     const editor = (el as any)._editor!;
     editor.commands.setContent(
-      '<p>Hello world</p><ai instruction="change world to earth" />',
+      'Hello world\n\n<ai instruction="change world to earth" />',
     );
 
     triggerShortcut(el, 'Enter', { ctrlKey: true });
@@ -187,7 +194,7 @@ describe('AiExecute single-step undo', () => {
 
     const editor = (el as any)._editor!;
     editor.commands.setContent(
-      '<p>Original text</p><ai instruction="do something" />',
+      'Original text\n\n<ai instruction="do something" />',
     );
     const originalDoc = editor.state.doc.toJSON();
 
@@ -207,14 +214,13 @@ describe('AiExecute single-step undo', () => {
 
   it('second undo does not change document further (single history entry)', async () => {
     const provider = mockProvider('# New content');
-    const el = await createElement();
+    const el = await createElement({
+      content: 'Original\n\n<ai instruction="test" />',
+    });
     el.aiProvider = provider;
     await el.updateComplete;
 
     const editor = (el as any)._editor!;
-    editor.commands.setContent(
-      '<p>Original</p><ai instruction="test" />',
-    );
 
     triggerShortcut(el, 'Enter', { ctrlKey: true });
     await waitForExecution(provider);
@@ -238,7 +244,7 @@ describe('AiExecute single-step undo', () => {
 
     const editor = (el as any)._editor!;
     editor.commands.setContent(
-      '<p>Original text</p><ai instruction="modify" />',
+      'Original text\n\n<ai instruction="modify" />',
     );
 
     triggerShortcut(el, 'Enter', { ctrlKey: true });
@@ -265,7 +271,7 @@ describe('AiExecute single-step undo', () => {
 
     const editor = (el as any)._editor!;
     editor.commands.setContent(
-      '<p>Hello world</p><ai instruction="change world to earth" />',
+      'Hello world\n\n<ai instruction="change world to earth" />',
     );
     const originalDoc = editor.state.doc.toJSON();
 

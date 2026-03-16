@@ -127,7 +127,7 @@ describe('AiExecute execution pipeline', () => {
 
     const editor = (el as any)._editor!;
     editor.commands.setContent(
-      '<p>Some text</p><ai instruction="summarize this" />',
+      'Some text\n\n<ai instruction="summarize this" />',
     );
 
     triggerShortcut(el, 'Enter', { ctrlKey: true });

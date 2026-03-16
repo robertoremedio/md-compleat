@@ -10,6 +10,7 @@ import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import { AiDirective } from './extensions/ai-directive.js';
+import { AiHighlight } from './extensions/ai-highlight.js';
 import { AiSuggestion } from './extensions/ai-suggestion.js';
 import { AiExecute } from './extensions/ai-execute.js';
 import type { AiProvider } from './ai/provider.js';
@@ -210,6 +211,12 @@ export class MdCompleat extends LitElement {
     .ProseMirror img {
       max-width: 100%;
       height: auto;
+    }
+
+    /* AI highlight marks */
+    mark[data-ai-highlight] {
+      background: var(--md-compleat-ai-highlight, rgba(74, 144, 226, 0.15));
+      transition: background 0.3s ease;
     }
 
     /* AI directive chips */
@@ -426,6 +433,7 @@ export class MdCompleat extends LitElement {
         AiDirective.configure({
           ...(this.aiShortcut ? { shortcut: this.aiShortcut } : {}),
         }),
+        AiHighlight,
         AiSuggestion,
         AiExecute.configure({
           ...(this.aiExecuteShortcut ? { shortcut: this.aiExecuteShortcut } : {}),
