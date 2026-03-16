@@ -1,0 +1,39 @@
+src/__tests__/diff-docs.test.ts
+  34c9d43c5a4c2095 40-41,53-54,73,76,91,93,105,108,121-122
+src/md-compleat.ts
+  34c9d43c5a4c2095 13,216-221,436
+src/__tests__/ai-content-replace.test.ts
+  34c9d43c5a4c2095 59-66,99,123,197,217-219,247,274
+src/extensions/ai-execute.ts
+  34c9d43c5a4c2095 2,5-6,67,70,81-129
+src/ai/parse-markdown.ts
+  34c9d43c5a4c2095 1-20
+src/ai/diff-docs.ts
+  34c9d43c5a4c2095 1-63
+src/__tests__/ai-execute.test.ts
+  34c9d43c5a4c2095 130
+src/extensions/ai-highlight.ts
+  34c9d43c5a4c2095 1-90
+src/__tests__/ai-highlight.test.ts
+  34c9d43c5a4c2095 41,59,77,112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "2179f2c5403a94b2701750a431689d0c5d0388f4",
+  "prompts": {
+    "34c9d43c5a4c2095": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "befe21d5-8cc1-4714-a648-8e45297b508d",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 384,
+      "total_deletions": 86,
+      "accepted_lines": 325,
+      "overriden_lines": 0
+    }
+  }
+}
