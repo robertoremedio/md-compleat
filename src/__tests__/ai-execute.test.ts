@@ -440,12 +440,11 @@ describe('AiExecute onExecutionStateChange callback', () => {
     await el.updateComplete;
 
     const editor = (el as any)._editor!;
-    const ext = editor.extensionManager.extensions.find(
-      (e: any) => e.name === 'aiExecute',
-    );
 
     const stateChanges: boolean[] = [];
-    ext.options.onExecutionStateChange = (executing: boolean) => {
+    // Note: ext.options is a getter in Tiptap 3 that returns a new object
+    // each call, so we override via storage instead.
+    editor.storage.aiExecute.onExecutionStateChange = (executing: boolean) => {
       stateChanges.push(executing);
     };
 
@@ -470,12 +469,9 @@ describe('AiExecute onExecutionStateChange callback', () => {
     await el.updateComplete;
 
     const editor = (el as any)._editor!;
-    const ext = editor.extensionManager.extensions.find(
-      (e: any) => e.name === 'aiExecute',
-    );
 
     const stateChanges: boolean[] = [];
-    ext.options.onExecutionStateChange = (executing: boolean) => {
+    editor.storage.aiExecute.onExecutionStateChange = (executing: boolean) => {
       stateChanges.push(executing);
     };
 
@@ -498,12 +494,9 @@ describe('AiExecute onExecutionStateChange callback', () => {
     await el.updateComplete;
 
     const editor = (el as any)._editor!;
-    const ext = editor.extensionManager.extensions.find(
-      (e: any) => e.name === 'aiExecute',
-    );
 
     const stateChanges: boolean[] = [];
-    ext.options.onExecutionStateChange = (executing: boolean) => {
+    editor.storage.aiExecute.onExecutionStateChange = (executing: boolean) => {
       stateChanges.push(executing);
     };
 

@@ -268,6 +268,52 @@ export class MdCompleat extends LitElement {
       background: #f0e6ff;
     }
 
+    /* AI execution state */
+    .editor.ai-executing {
+      overflow: hidden;
+      cursor: wait;
+    }
+
+    .editor.ai-executing .ProseMirror {
+      cursor: wait;
+    }
+
+    .editor.ai-executing::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--md-compleat-ai-chip-border, #7c3aed);
+      animation: md-compleat-progress 1.5s ease-in-out infinite;
+      z-index: 10;
+    }
+
+    .editor.ai-executing::after {
+      content: 'Press Esc to cancel';
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 0.75em;
+      color: rgba(0, 0, 0, 0.45);
+      z-index: 10;
+    }
+
+    @keyframes md-compleat-progress {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .editor.ai-executing .ai-chip {
+      animation: md-compleat-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes md-compleat-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
+      50% { box-shadow: 0 0 8px 2px rgba(124, 58, 237, 0.3); }
+    }
+
   `;
 
   @property({ type: String }) content = '';
@@ -346,6 +392,7 @@ export class MdCompleat extends LitElement {
   override disconnectedCallback() {
     super.disconnectedCallback();
     this._editor?.storage.aiExecute?.abortController?.abort();
+    this.renderRoot.querySelector('.editor')?.classList.remove('ai-executing');
     this._editor?.destroy();
     this._editor = null;
   }
@@ -383,6 +430,9 @@ export class MdCompleat extends LitElement {
         AiExecute.configure({
           ...(this.aiExecuteShortcut ? { shortcut: this.aiExecuteShortcut } : {}),
           getProvider: () => this.getActiveProvider(),
+          onExecutionStateChange: (executing: boolean) => {
+            (element as HTMLElement).classList.toggle('ai-executing', executing);
+          },
         }),
       ],
       content: this.content,
