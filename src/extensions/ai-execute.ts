@@ -9,6 +9,7 @@ export interface AiExecuteOptions {
   shortcut: string;
   getProvider: () => AiProvider;
   onExecutionStateChange: (executing: boolean) => void;
+  onError: (error: Error, type: string) => void;
 }
 
 export const AiExecute = Extension.create<AiExecuteOptions>({
@@ -21,6 +22,7 @@ export const AiExecute = Extension.create<AiExecuteOptions>({
         throw new Error('AiExecute: getProvider not configured');
       },
       onExecutionStateChange: () => {},
+      onError: () => {},
     };
   },
 
@@ -28,6 +30,7 @@ export const AiExecute = Extension.create<AiExecuteOptions>({
     return {
       abortController: null as AbortController | null,
       onExecutionStateChange: null as ((executing: boolean) => void) | null,
+      onError: null as ((error: Error, type: string) => void) | null,
     };
   },
 
@@ -40,6 +43,11 @@ export const AiExecute = Extension.create<AiExecuteOptions>({
         this.storage.onExecutionStateChange ??
         this.options.onExecutionStateChange;
       cb(executing);
+    };
+
+    const notifyError = (error: Error, type: string) => {
+      const cb = this.storage.onError ?? this.options.onError;
+      cb(error, type);
     };
 
     return {
@@ -76,9 +84,40 @@ export const AiExecute = Extension.create<AiExecuteOptions>({
         provider
           .execute(markdown, controller.signal)
           .then((result) => {
-            if (!editor.isDestroyed) {
-              editor.setEditable(true, false);
+            if (editor.isDestroyed) return;
 
+            // Validate response type
+            if (typeof result !== 'string') {
+              const error = new Error('AI returned invalid response');
+              editor.setEditable(true, false);
+              editor.view.dom.dispatchEvent(
+                new CustomEvent('ai-error', {
+                  bubbles: true,
+                  composed: true,
+                  detail: { error, type: 'parse' },
+                }),
+              );
+              notifyError(error, 'parse');
+              return;
+            }
+
+            // Validate empty response
+            if (result.trim() === '') {
+              const errorType = 'empty-response';
+              const error = new Error('AI returned an empty response');
+              editor.setEditable(true, false);
+              editor.view.dom.dispatchEvent(
+                new CustomEvent('ai-error', {
+                  bubbles: true,
+                  composed: true,
+                  detail: { error, type: errorType },
+                }),
+              );
+              notifyError(error, errorType);
+              return;
+            }
+
+            try {
               // Parse the AI response into a ProseMirror doc
               const newDoc = parseMarkdown(editor, result);
 
@@ -128,14 +167,39 @@ export const AiExecute = Extension.create<AiExecuteOptions>({
                   detail: { duration, charactersChanged },
                 }),
               );
+
+              editor.setEditable(true, false);
+            } catch (parseErr) {
+              editor.setEditable(true, false);
+              const error =
+                parseErr instanceof Error
+                  ? parseErr
+                  : new Error(String(parseErr));
+              editor.view.dom.dispatchEvent(
+                new CustomEvent('ai-error', {
+                  bubbles: true,
+                  composed: true,
+                  detail: { error, type: 'parse' },
+                }),
+              );
+              notifyError(error, 'parse');
             }
           })
           .catch((err) => {
-            if (err?.name !== 'AbortError') {
-              console.error('AiExecute error:', err);
-            }
+            if (err?.name === 'AbortError') return;
+            console.error('AiExecute error:', err);
             if (!editor.isDestroyed) {
               editor.setEditable(true, false);
+              const error =
+                err instanceof Error ? err : new Error(String(err));
+              editor.view.dom.dispatchEvent(
+                new CustomEvent('ai-error', {
+                  bubbles: true,
+                  composed: true,
+                  detail: { error, type: 'provider' },
+                }),
+              );
+              notifyError(error, 'provider');
             }
           })
           .finally(() => {

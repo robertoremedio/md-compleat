@@ -1,5 +1,5 @@
 import { LitElement, html, css } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from 'tiptap-markdown';
@@ -321,6 +321,25 @@ export class MdCompleat extends LitElement {
       50% { box-shadow: 0 0 8px 2px rgba(124, 58, 237, 0.3); }
     }
 
+    .ai-error-toast {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #d32f2f;
+      color: #fff;
+      padding: 0.5em 1em;
+      border-radius: 4px;
+      font-size: 0.85em;
+      z-index: 20;
+      animation: md-compleat-toast-in 0.2s ease-out;
+    }
+
+    @keyframes md-compleat-toast-in {
+      from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
   `;
 
   @property({ type: String }) content = '';
@@ -333,10 +352,13 @@ export class MdCompleat extends LitElement {
   @property({ type: String, attribute: 'ai-cli-command' }) aiCliCommand = '';
   @property({ type: String, attribute: 'ai-proxy-headers' }) aiProxyHeaders = '';
 
+  @state() private _errorMessage: string | null = null;
+
   private _editor: Editor | null = null;
   private _updatingFromEditor = false;
   private _aiProvider: AiProvider | null = null;
   private _cachedProvider: AiProvider | null = null;
+  private _errorToastTimer: ReturnType<typeof setTimeout> | null = null;
 
   set aiProvider(provider: AiProvider | null) {
     this._aiProvider = provider;
@@ -365,7 +387,9 @@ export class MdCompleat extends LitElement {
   }
 
   override render() {
-    return html`<div class="editor"></div>`;
+    return html`<div class="editor"></div>${this._errorMessage
+        ? html`<div class="ai-error-toast">${this._errorMessage}</div>`
+        : ''}`;
   }
 
   override firstUpdated() {
@@ -398,6 +422,10 @@ export class MdCompleat extends LitElement {
 
   override disconnectedCallback() {
     super.disconnectedCallback();
+    if (this._errorToastTimer) {
+      clearTimeout(this._errorToastTimer);
+      this._errorToastTimer = null;
+    }
     this._editor?.storage.aiExecute?.abortController?.abort();
     this.renderRoot.querySelector('.editor')?.classList.remove('ai-executing');
     this._editor?.destroy();
@@ -440,6 +468,16 @@ export class MdCompleat extends LitElement {
           getProvider: () => this.getActiveProvider(),
           onExecutionStateChange: (executing: boolean) => {
             (element as HTMLElement).classList.toggle('ai-executing', executing);
+          },
+          onError: (error: Error) => {
+            if (this._errorToastTimer) {
+              clearTimeout(this._errorToastTimer);
+            }
+            this._errorMessage = error.message;
+            this._errorToastTimer = setTimeout(() => {
+              this._errorMessage = null;
+              this._errorToastTimer = null;
+            }, 5000);
           },
         }),
       ],
