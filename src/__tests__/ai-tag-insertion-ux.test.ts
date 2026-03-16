@@ -99,8 +99,10 @@ describe('keyboard shortcut for AI directive insertion', () => {
       }),
     );
     await el.updateComplete;
-    // Allow microtask for auto-edit
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    // Wait for queueMicrotask in NodeView to fire enterEditMode, but NOT
+    // for the setTimeout inside it (which calls focus and can trigger a
+    // spurious blur → commit → input removal when parallel tests steal focus).
+    await new Promise((resolve) => queueMicrotask(resolve));
 
     const json = editor.getJSON();
     const aiNode = json.content?.find((n: any) => n.type === 'aiDirective');
