@@ -3,21 +3,25 @@
   "version": "0.0.1",
   "type": "module",
   "description": "WYSIWYG Markdown editor web component with AI directives",
-  "main": "./dist/md-compleat.js",
+  "main": "./dist/md-compleat.umd.cjs",
   "module": "./dist/md-compleat.js",
   "types": "./dist/index.d.ts",
+  "customElements": "custom-elements.json",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/md-compleat.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/md-compleat.umd.cjs"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "custom-elements.json"
   ],
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && tsc",
+    "build": "vite build && tsc && cem analyze --litelement --globs \"src/md-compleat.ts\"",
+    "analyze": "cem analyze --litelement --globs \"src/md-compleat.ts\"",
     "test": "vitest run --passWithNoTests"
   },
   "peerDependencies": {
@@ -34,6 +38,7 @@
     "tiptap-markdown": "^0.9.0"
   },
   "devDependencies": {
+    "@custom-elements-manifest/analyzer": "^0.11.0",
     "@open-wc/testing": "^4.0.0",
     "@types/shell-quote": "^1.7.5",
     "jsdom": "^29.0.0",

@@ -1,0 +1,372 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/md-compleat.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "",
+          "name": "MdCompleat",
+          "cssProperties": [
+            {
+              "description": "Main font family",
+              "name": "--md-compleat-font-family",
+              "default": "system-ui, -apple-system, sans-serif"
+            },
+            {
+              "description": "Monospace font family",
+              "name": "--md-compleat-font-mono",
+              "default": "ui-monospace, 'SFMono-Regular', 'SF Mono', Menlo, Consolas, monospace"
+            },
+            {
+              "description": "Maximum width of the editor",
+              "name": "--md-compleat-max-width",
+              "default": "65ch"
+            },
+            {
+              "description": "Maximum height of the editor",
+              "name": "--md-compleat-max-height",
+              "default": "none"
+            },
+            {
+              "description": "Focus outline style",
+              "name": "--md-compleat-focus-outline",
+              "default": "2px solid highlight"
+            },
+            {
+              "description": "Code block background color",
+              "name": "--md-compleat-code-bg",
+              "default": "rgba(0, 0, 0, 0.06)"
+            },
+            {
+              "description": "Blockquote left border",
+              "name": "--md-compleat-blockquote-border",
+              "default": "3px solid rgba(0, 0, 0, 0.2)"
+            },
+            {
+              "description": "Horizontal rule color",
+              "name": "--md-compleat-hr-color",
+              "default": "rgba(0, 0, 0, 0.15)"
+            },
+            {
+              "description": "Table border style",
+              "name": "--md-compleat-table-border",
+              "default": "1px solid rgba(0, 0, 0, 0.15)"
+            },
+            {
+              "description": "Link color",
+              "name": "--md-compleat-link-color",
+              "default": "#1a6be0"
+            },
+            {
+              "description": "AI highlight background",
+              "name": "--md-compleat-ai-highlight",
+              "default": "rgba(74, 144, 226, 0.15)"
+            },
+            {
+              "description": "AI directive chip background",
+              "name": "--md-compleat-ai-chip-bg",
+              "default": "#f0e6ff"
+            },
+            {
+              "description": "AI directive chip border color",
+              "name": "--md-compleat-ai-chip-border",
+              "default": "#7c3aed"
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "content",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "attribute": "content"
+            },
+            {
+              "kind": "field",
+              "name": "aiShortcut",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "attribute": "ai-shortcut"
+            },
+            {
+              "kind": "field",
+              "name": "aiExecuteShortcut",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "attribute": "ai-execute-shortcut"
+            },
+            {
+              "kind": "field",
+              "name": "aiProviderName",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "attribute": "ai-provider"
+            },
+            {
+              "kind": "field",
+              "name": "aiEndpoint",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "attribute": "ai-endpoint"
+            },
+            {
+              "kind": "field",
+              "name": "aiCliCommand",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "attribute": "ai-cli-command"
+            },
+            {
+              "kind": "field",
+              "name": "aiProxyHeaders",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "attribute": "ai-proxy-headers"
+            },
+            {
+              "kind": "field",
+              "name": "_errorMessage",
+              "type": {
+                "text": "string | null"
+              },
+              "privacy": "private",
+              "default": "null"
+            },
+            {
+              "kind": "field",
+              "name": "_showSuccess",
+              "type": {
+                "text": "boolean"
+              },
+              "privacy": "private",
+              "default": "false"
+            },
+            {
+              "kind": "field",
+              "name": "_editor",
+              "type": {
+                "text": "Editor | null"
+              },
+              "privacy": "private",
+              "default": "null"
+            },
+            {
+              "kind": "field",
+              "name": "_updatingFromEditor",
+              "type": {
+                "text": "boolean"
+              },
+              "privacy": "private",
+              "default": "false"
+            },
+            {
+              "kind": "field",
+              "name": "_aiProvider",
+              "type": {
+                "text": "AiProvider | null"
+              },
+              "privacy": "private",
+              "default": "null"
+            },
+            {
+              "kind": "field",
+              "name": "_cachedProvider",
+              "type": {
+                "text": "AiProvider | null"
+              },
+              "privacy": "private",
+              "default": "null"
+            },
+            {
+              "kind": "field",
+              "name": "_errorToastTimer",
+              "type": {
+                "text": "ReturnType<typeof setTimeout> | null"
+              },
+              "privacy": "private",
+              "default": "null"
+            },
+            {
+              "kind": "field",
+              "name": "_successTimer",
+              "type": {
+                "text": "ReturnType<typeof setTimeout> | null"
+              },
+              "privacy": "private",
+              "default": "null"
+            },
+            {
+              "kind": "field",
+              "name": "_boundEscapeHandler",
+              "privacy": "private"
+            },
+            {
+              "kind": "field",
+              "name": "aiProvider",
+              "type": {
+                "text": "AiProvider | null"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "getActiveProvider",
+              "return": {
+                "type": {
+                  "text": "AiProvider"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "_handleEscapeCancel",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "event",
+                  "type": {
+                    "text": "KeyboardEvent"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "getMarkdown",
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "_showCompletionSequence",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "element",
+                  "type": {
+                    "text": "Element"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "_initEditor",
+              "privacy": "private"
+            }
+          ],
+          "events": [
+            {
+              "name": "content-changed",
+              "type": {
+                "text": "CustomEvent"
+              }
+            }
+          ],
+          "attributes": [
+            {
+              "name": "content",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "content"
+            },
+            {
+              "name": "ai-shortcut",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "aiShortcut"
+            },
+            {
+              "name": "ai-execute-shortcut",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "aiExecuteShortcut"
+            },
+            {
+              "name": "ai-provider",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "aiProviderName"
+            },
+            {
+              "name": "ai-endpoint",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "aiEndpoint"
+            },
+            {
+              "name": "ai-cli-command",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "aiCliCommand"
+            },
+            {
+              "name": "ai-proxy-headers",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "aiProxyHeaders"
+            }
+          ],
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "tagName": "md-compleat",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "MdCompleat",
+          "declaration": {
+            "name": "MdCompleat",
+            "module": "src/md-compleat.ts"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "md-compleat",
+          "declaration": {
+            "name": "MdCompleat",
+            "module": "src/md-compleat.ts"
+          }
+        }
+      ]
+    }
+  ]
+}
