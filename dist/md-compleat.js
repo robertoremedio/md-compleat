@@ -287,14 +287,19 @@ var A = d.create({
 	}
 });
 //#endregion
+//#region src/ai/prompt.ts
+function P() {
+	return "You are a writing assistant embedded in a Markdown editor. The user's document may contain <ai> directive tags that request AI-generated content.\n\nThere are two variants of the <ai> tag:\n\n1. Self-closing: <ai instruction=\"Write a summary of the project\" />\n   Replace the entire tag with the generated content.\n\n2. Block: <ai instruction=\"Rewrite this paragraph to be more concise\">existing content here</ai>\n   Replace the entire tag (including its content) with the improved version.\n\nYou will receive the full Markdown document. Return the complete document with all <ai> tags replaced by the generated content. Do not alter any other part of the document. Preserve all formatting, headings, lists, code blocks, and other Markdown syntax exactly as they appear.";
+}
+//#endregion
 //#region src/ai/parse-markdown.ts
-function P(e, t) {
+function F(e, t) {
 	let n = e.storage.markdown.parser.parse(t), r = document.createElement("div");
 	return r.innerHTML = n, D.fromSchema(e.schema).parse(r);
 }
 //#endregion
 //#region src/ai/diff-docs.ts
-function F(e, t) {
+function I(e, t) {
 	let n = e.content, r = t.content, i = n.findDiffStart(r);
 	if (i == null) return {
 		ranges: [],
@@ -326,7 +331,7 @@ function F(e, t) {
 }
 //#endregion
 //#region src/extensions/ai-execute.ts
-var I = l.create({
+var L = l.create({
 	name: "aiExecute",
 	addOptions() {
 		return {
@@ -360,7 +365,9 @@ var I = l.create({
 			let i = n.storage.markdown.getMarkdown(), a = n.state.doc, o = new AbortController();
 			this.storage.abortController = o;
 			let s = Date.now();
-			return n.setEditable(!1, !1), e(!0), this.options.getProvider().execute(i, o.signal).then((e) => {
+			n.setEditable(!1, !1), e(!0);
+			let c = this.options.getProvider(), l = P() + "\n\n---\n\n" + i;
+			return c.execute(l, o.signal).then((e) => {
 				if (!n.isDestroyed) {
 					if (typeof e != "string") {
 						let e = /* @__PURE__ */ Error("AI returned invalid response");
@@ -387,7 +394,7 @@ var I = l.create({
 						return;
 					}
 					try {
-						let t = P(n, e), { ranges: r, charactersChanged: i } = F(a, t), o = E(n.state.tr.replaceWith(0, n.state.doc.content.size, t.content));
+						let t = F(n, e), { ranges: r, charactersChanged: i } = I(a, t), o = E(n.state.tr.replaceWith(0, n.state.doc.content.size, t.content));
 						o.setMeta("aiReplacement", !0), n.view.dispatch(o);
 						let c = n.schema.marks.aiHighlight;
 						if (c && r.length > 0) {
@@ -444,13 +451,13 @@ var I = l.create({
 			return r.key === "Escape" && e.storage.abortController && !e.storage.abortController.signal.aborted ? (e.storage.abortController.abort(), e.storage.abortController = null, e.editor.isDestroyed || e.editor.setEditable(!0, !1), t(!1), r.preventDefault(), !0) : !1;
 		} } } })];
 	}
-}), L = /* @__PURE__ */ t(((e, t) => {
+}), R = /* @__PURE__ */ t(((e, t) => {
 	t.exports = function(e) {
 		return e.map(function(e) {
 			return e === "" ? "''" : e && typeof e == "object" ? e.op.replace(/(.)/g, "\\$1") : /["\s\\]/.test(e) && !/'/.test(e) ? "'" + e.replace(/(['])/g, "\\$1") + "'" : /["'\s]/.test(e) ? "\"" + e.replace(/(["\\$`!])/g, "\\$1") + "\"" : String(e).replace(/([A-Za-z]:)?([#!"$&'()*,:;<=>?@[\\\]^`{|}])/g, "$1\\$2");
 		}).join(" ");
 	};
-})), R = /* @__PURE__ */ t(((e, t) => {
+})), z = /* @__PURE__ */ t(((e, t) => {
 	for (var n = "(?:" + [
 		"\\|\\|",
 		"\\&\\&",
@@ -527,15 +534,9 @@ var I = l.create({
 			}));
 		}, []) : r;
 	};
-})), z = (/* @__PURE__ */ t(((e) => {
-	e.quote = L(), e.parse = R();
-})))();
-function B() {
-	return "You are a writing assistant embedded in a Markdown editor. The user's document may contain <ai> directive tags that request AI-generated content.\n\nThere are two variants of the <ai> tag:\n\n1. Self-closing: <ai instruction=\"Write a summary of the project\" />\n   Replace the entire tag with the generated content.\n\n2. Block: <ai instruction=\"Rewrite this paragraph to be more concise\">existing content here</ai>\n   Replace the entire tag (including its content) with the improved version.\n\nYou will receive the full Markdown document. Return the complete document with all <ai> tags replaced by the generated content. Do not alter any other part of the document. Preserve all formatting, headings, lists, code blocks, and other Markdown syntax exactly as they appear.";
-}
-//#endregion
-//#region src/ai/providers/cli.ts
-var V = class {
+})), B = (/* @__PURE__ */ t(((e) => {
+	e.quote = R(), e.parse = z();
+})))(), V = class {
 	constructor(e) {
 		if (!e.cliCommand) throw Error("CLI provider requires a cliCommand");
 		this.command = e.cliCommand;
@@ -548,37 +549,37 @@ var V = class {
 		} catch {
 			throw Error("CLI provider requires Node.js/Electron environment (child_process not available)");
 		}
-		let i = (0, z.parse)(this.command);
+		let i = (0, B.parse)(this.command);
 		if (i.some((e) => typeof e != "string")) throw Error("CLI command contains shell operators (&&, |, ;, etc.) which are not supported. Use a wrapper script instead.");
-		let [a, ...o] = i, s = B() + "\n\n---\n\n" + t;
-		return new Promise((e, t) => {
-			let i = r(a, o, { stdio: [
+		let [a, ...o] = i;
+		return new Promise((e, i) => {
+			let s = r(a, o, { stdio: [
 				"pipe",
 				"pipe",
 				"pipe"
 			] }), c = !1, l = (t) => {
 				c || (c = !0, e(t));
 			}, u = (e) => {
-				c || (c = !0, t(e));
+				c || (c = !0, i(e));
 			}, d = () => {
 				n && n.removeEventListener("abort", f);
 			}, f = () => {
-				i.kill(), u(/* @__PURE__ */ Error("Aborted")), d();
+				s.kill(), u(/* @__PURE__ */ Error("Aborted")), d();
 			}, p = [], m = [];
-			i.stdout.on("data", (e) => {
+			s.stdout.on("data", (e) => {
 				p.push(e);
-			}), i.stderr.on("data", (e) => {
+			}), s.stderr.on("data", (e) => {
 				m.push(e);
-			}), i.on("error", (e) => {
+			}), s.on("error", (e) => {
 				u(e), d();
-			}), i.on("close", (e) => {
+			}), s.on("close", (e) => {
 				if (e === 0) l(Buffer.concat(p).toString());
 				else {
 					let t = Buffer.concat(m).toString();
 					u(/* @__PURE__ */ Error(`CLI command exited with code ${e}: ${t}`));
 				}
 				d();
-			}), n && n.addEventListener("abort", f), i.stdin.write(s), i.stdin.end();
+			}), n && n.addEventListener("abort", f), s.stdin.write(t), s.stdin.end();
 		});
 	}
 }, H = class {
@@ -1055,7 +1056,7 @@ var G = l.create({
 				A.configure({ ...this.aiShortcut ? { shortcut: this.aiShortcut } : {} }),
 				j,
 				N,
-				I.configure({
+				L.configure({
 					...this.aiExecuteShortcut ? { shortcut: this.aiExecuteShortcut } : {},
 					getProvider: () => this.getActiveProvider(),
 					onExecutionStateChange: (t) => {

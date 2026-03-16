@@ -19634,14 +19634,19 @@ var jw = U.create({
 	}
 });
 //#endregion
+//#region src/ai/prompt.ts
+function Fw() {
+	return "You are a writing assistant embedded in a Markdown editor. The user's document may contain <ai> directive tags that request AI-generated content.\n\nThere are two variants of the <ai> tag:\n\n1. Self-closing: <ai instruction=\"Write a summary of the project\" />\n   Replace the entire tag with the generated content.\n\n2. Block: <ai instruction=\"Rewrite this paragraph to be more concise\">existing content here</ai>\n   Replace the entire tag (including its content) with the improved version.\n\nYou will receive the full Markdown document. Return the complete document with all <ai> tags replaced by the generated content. Do not alter any other part of the document. Preserve all formatting, headings, lists, code blocks, and other Markdown syntax exactly as they appear.";
+}
+//#endregion
 //#region src/ai/parse-markdown.ts
-function Fw(e, t) {
+function Iw(e, t) {
 	let n = e.storage.markdown.parser.parse(t), r = document.createElement("div");
 	return r.innerHTML = n, rn.fromSchema(e.schema).parse(r);
 }
 //#endregion
 //#region src/ai/diff-docs.ts
-function Iw(e, t) {
+function Lw(e, t) {
 	let n = e.content, r = t.content, i = n.findDiffStart(r);
 	if (i == null) return {
 		ranges: [],
@@ -19673,7 +19678,7 @@ function Iw(e, t) {
 }
 //#endregion
 //#region src/extensions/ai-execute.ts
-var Lw = H.create({
+var Rw = H.create({
 	name: "aiExecute",
 	addOptions() {
 		return {
@@ -19707,7 +19712,9 @@ var Lw = H.create({
 			let i = n.storage.markdown.getMarkdown(), a = n.state.doc, o = new AbortController();
 			this.storage.abortController = o;
 			let s = Date.now();
-			return n.setEditable(!1, !1), e(!0), this.options.getProvider().execute(i, o.signal).then((e) => {
+			n.setEditable(!1, !1), e(!0);
+			let c = this.options.getProvider(), l = Fw() + "\n\n---\n\n" + i;
+			return c.execute(l, o.signal).then((e) => {
 				if (!n.isDestroyed) {
 					if (typeof e != "string") {
 						let e = /* @__PURE__ */ Error("AI returned invalid response");
@@ -19734,7 +19741,7 @@ var Lw = H.create({
 						return;
 					}
 					try {
-						let t = Fw(n, e), { ranges: r, charactersChanged: i } = Iw(a, t), o = n_(n.state.tr.replaceWith(0, n.state.doc.content.size, t.content));
+						let t = Iw(n, e), { ranges: r, charactersChanged: i } = Lw(a, t), o = n_(n.state.tr.replaceWith(0, n.state.doc.content.size, t.content));
 						o.setMeta("aiReplacement", !0), n.view.dispatch(o);
 						let c = n.schema.marks.aiHighlight;
 						if (c && r.length > 0) {
@@ -19791,13 +19798,13 @@ var Lw = H.create({
 			return r.key === "Escape" && e.storage.abortController && !e.storage.abortController.signal.aborted ? (e.storage.abortController.abort(), e.storage.abortController = null, e.editor.isDestroyed || e.editor.setEditable(!0, !1), t(!1), r.preventDefault(), !0) : !1;
 		} } } })];
 	}
-}), Rw = /* @__PURE__ */ o(((e, t) => {
+}), zw = /* @__PURE__ */ o(((e, t) => {
 	t.exports = function(e) {
 		return e.map(function(e) {
 			return e === "" ? "''" : e && typeof e == "object" ? e.op.replace(/(.)/g, "\\$1") : /["\s\\]/.test(e) && !/'/.test(e) ? "'" + e.replace(/(['])/g, "\\$1") + "'" : /["'\s]/.test(e) ? "\"" + e.replace(/(["\\$`!])/g, "\\$1") + "\"" : String(e).replace(/([A-Za-z]:)?([#!"$&'()*,:;<=>?@[\\\]^`{|}])/g, "$1\\$2");
 		}).join(" ");
 	};
-})), zw = /* @__PURE__ */ o(((e, t) => {
+})), Bw = /* @__PURE__ */ o(((e, t) => {
 	for (var n = "(?:" + [
 		"\\|\\|",
 		"\\&\\&",
@@ -19874,15 +19881,9 @@ var Lw = H.create({
 			}));
 		}, []) : r;
 	};
-})), Bw = (/* @__PURE__ */ o(((e) => {
-	e.quote = Rw(), e.parse = zw();
-})))();
-function Vw() {
-	return "You are a writing assistant embedded in a Markdown editor. The user's document may contain <ai> directive tags that request AI-generated content.\n\nThere are two variants of the <ai> tag:\n\n1. Self-closing: <ai instruction=\"Write a summary of the project\" />\n   Replace the entire tag with the generated content.\n\n2. Block: <ai instruction=\"Rewrite this paragraph to be more concise\">existing content here</ai>\n   Replace the entire tag (including its content) with the improved version.\n\nYou will receive the full Markdown document. Return the complete document with all <ai> tags replaced by the generated content. Do not alter any other part of the document. Preserve all formatting, headings, lists, code blocks, and other Markdown syntax exactly as they appear.";
-}
-//#endregion
-//#region src/ai/providers/cli.ts
-var Hw = class {
+})), Vw = (/* @__PURE__ */ o(((e) => {
+	e.quote = zw(), e.parse = Bw();
+})))(), Hw = class {
 	constructor(e) {
 		if (!e.cliCommand) throw Error("CLI provider requires a cliCommand");
 		this.command = e.cliCommand;
@@ -19895,18 +19896,18 @@ var Hw = class {
 		} catch {
 			throw Error("CLI provider requires Node.js/Electron environment (child_process not available)");
 		}
-		let r = (0, Bw.parse)(this.command);
+		let r = (0, Vw.parse)(this.command);
 		if (r.some((e) => typeof e != "string")) throw Error("CLI command contains shell operators (&&, |, ;, etc.) which are not supported. Use a wrapper script instead.");
-		let [i, ...a] = r, o = Vw() + "\n\n---\n\n" + e;
-		return new Promise((e, r) => {
+		let [i, ...a] = r;
+		return new Promise((r, o) => {
 			let s = n(i, a, { stdio: [
 				"pipe",
 				"pipe",
 				"pipe"
-			] }), c = !1, l = (t) => {
-				c || (c = !0, e(t));
-			}, u = (e) => {
+			] }), c = !1, l = (e) => {
 				c || (c = !0, r(e));
+			}, u = (e) => {
+				c || (c = !0, o(e));
 			}, d = () => {
 				t && t.removeEventListener("abort", f);
 			}, f = () => {
@@ -19925,7 +19926,7 @@ var Hw = class {
 					u(/* @__PURE__ */ Error(`CLI command exited with code ${e}: ${t}`));
 				}
 				d();
-			}), t && t.addEventListener("abort", f), s.stdin.write(o), s.stdin.end();
+			}), t && t.addEventListener("abort", f), s.stdin.write(e), s.stdin.end();
 		});
 	}
 }, Uw = class {
@@ -20402,7 +20403,7 @@ var Kw = H.create({
 				jw.configure({ ...this.aiShortcut ? { shortcut: this.aiShortcut } : {} }),
 				Mw,
 				Pw,
-				Lw.configure({
+				Rw.configure({
 					...this.aiExecuteShortcut ? { shortcut: this.aiExecuteShortcut } : {},
 					getProvider: () => this.getActiveProvider(),
 					onExecutionStateChange: (t) => {
