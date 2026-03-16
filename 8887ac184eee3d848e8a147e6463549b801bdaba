@@ -1,0 +1,23 @@
+src/__tests__/success-toast-animation.test.ts
+  219701e10b35be6a 1-81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "8887ac184eee3d848e8a147e6463549b801bdaba",
+  "prompts": {
+    "219701e10b35be6a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "089d589a-1271-44f3-a4f4-f4f48799944b",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 81,
+      "total_deletions": 0,
+      "accepted_lines": 81,
+      "overriden_lines": 0
+    }
+  }
+}
