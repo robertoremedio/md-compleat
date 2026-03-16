@@ -19367,10 +19367,9 @@ function kw({ node: e, editor: t, getPos: n }) {
 	o.classList.add("ai-chip"), o.setAttribute("data-variant", r.attrs.variant);
 	let s = document.createElement("button");
 	s.classList.add("ai-chip__icon"), s.textContent = "▶", s.type = "button", s.addEventListener("click", (e) => {
-		e.stopPropagation(), o.dispatchEvent(new CustomEvent("ai-execute-request", {
-			bubbles: !0,
-			composed: !0
-		}));
+		e.stopPropagation();
+		let n = t.extensionManager.extensions.find((e) => e.name === "aiExecute")?.storage.executeAi;
+		n && n();
 	}), o.appendChild(s);
 	let c = document.createElement("button");
 	c.classList.add("ai-chip__toggle"), c.textContent = "⤢", c.type = "button", c.addEventListener("click", (e) => {
@@ -20440,9 +20439,6 @@ var Kw = H.create({
 			}
 		}), this._editor.view.dom.addEventListener("ai-completed", () => {
 			this._showCompletionSequence(e);
-		}), this._editor.view.dom.addEventListener("ai-execute-request", () => {
-			let e = this._editor?.extensionManager.extensions.find((e) => e.name === "aiExecute")?.storage.executeAi;
-			e && e();
 		}));
 	}
 };
