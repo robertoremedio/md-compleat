@@ -30,18 +30,27 @@ const editor = document.querySelector('md-compleat');
 const markdown = editor.getMarkdown();
 ```
 
-## UMD / CDN Usage
+## Standalone / Script Tag Usage
 
-You can load md-compleat via a script tag. Note that Lit and Tiptap peer dependencies must be loaded separately:
+A standalone build is available that bundles all dependencies (Lit, Tiptap) into a single file — no peer dependencies needed:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/lit/+esm" type="module"></script>
-<script src="https://cdn.jsdelivr.net/npm/md-compleat/dist/md-compleat.umd.cjs"></script>
+<script type="module">
+  import 'md-compleat/standalone';
+</script>
+
+<md-compleat content="# Hello World"></md-compleat>
+```
+
+Or via CDN:
+
+```html
+<script type="module" src="https://cdn.jsdelivr.net/npm/md-compleat/dist/md-compleat.standalone.js"></script>
 
 <md-compleat content="# Hello from CDN"></md-compleat>
 ```
 
-For full Tiptap support (tables, images, links), use ESM imports instead of UMD.
+The standalone build is larger (~213KB gzipped) since it includes all dependencies. Use the standard ESM import if your bundler already provides Lit and Tiptap.
 
 ## Attributes / Properties
 

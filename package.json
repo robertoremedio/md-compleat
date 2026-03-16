@@ -12,6 +12,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/md-compleat.js",
       "require": "./dist/md-compleat.umd.cjs"
+    },
+    "./standalone": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/md-compleat.standalone.js"
     }
   },
   "files": [
@@ -20,7 +24,7 @@
   ],
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && tsc && cem analyze --litelement --globs \"src/md-compleat.ts\"",
+    "build": "vite build && vite build --config vite.standalone.config.ts && tsc && cem analyze --litelement --globs \"src/md-compleat.ts\"",
     "analyze": "cem analyze --litelement --globs \"src/md-compleat.ts\"",
     "test": "vitest run --passWithNoTests"
   },
@@ -41,6 +45,7 @@
     "@custom-elements-manifest/analyzer": "^0.11.0",
     "@open-wc/testing": "^4.0.0",
     "@types/shell-quote": "^1.7.5",
+    "@vitest/coverage-v8": "^4.1.0",
     "jsdom": "^29.0.0",
     "typescript": "^5.9.3",
     "vite": "^8.0.0",

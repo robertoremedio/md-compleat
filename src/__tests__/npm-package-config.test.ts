@@ -33,6 +33,10 @@ describe('package.json configuration', () => {
           import: './dist/md-compleat.js',
           require: './dist/md-compleat.umd.cjs',
         },
+        './standalone': {
+          types: './dist/index.d.ts',
+          import: './dist/md-compleat.standalone.js',
+        },
       });
     });
 
