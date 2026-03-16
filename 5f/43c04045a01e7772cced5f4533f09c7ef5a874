@@ -1,0 +1,39 @@
+src/__tests__/ai-execute.test.ts
+  0c4379c4b8595dfd 1098-1198
+src/__tests__/ai-highlight.test.ts
+  0c4379c4b8595dfd 108-146
+src/__tests__/md-compleat.test.ts
+  0c4379c4b8595dfd 415-590
+src/__tests__/ai-directive-chip.test.ts
+  0c4379c4b8595dfd 484-567
+src/__tests__/ai-tag-insertion-ux.test.ts
+  0c4379c4b8595dfd 401-454
+src/__tests__/ai-directive.test.ts
+  0c4379c4b8595dfd 133-149
+.github/workflows/ci.yml
+  0c4379c4b8595dfd 19
+src/__tests__/ai-provider.test.ts
+  0c4379c4b8595dfd 11,213-221
+src/__tests__/diff-docs.test.ts
+  0c4379c4b8595dfd 117-151
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "5f43c04045a01e7772cced5f4533f09c7ef5a874",
+  "prompts": {
+    "0c4379c4b8595dfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6184387b-bb41-4f36-8a1e-cbebb40a52ab",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 611,
+      "total_deletions": 93,
+      "accepted_lines": 520,
+      "overriden_lines": 0
+    }
+  }
+}
