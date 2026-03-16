@@ -495,12 +495,13 @@ describe('AI chip stopEvent', () => {
     const view = aiDirectiveNodeView({
       node,
       editor,
+      view: editor.view,
       getPos: () => 0,
       HTMLAttributes: {},
       decorations: [] as any,
       innerDecorations: [] as any,
       extension: {} as any,
-    });
+    } as any);
 
     const input = document.createElement('input');
     const textarea = document.createElement('textarea');
