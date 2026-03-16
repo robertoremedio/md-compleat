@@ -1,0 +1,23 @@
+src/extensions/ai-directive.ts
+  276947c639a93b41 143-144,147-156,158,161,187-190,200
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "5fa7598344f652dbdeb7049c30965c351c039330",
+  "prompts": {
+    "276947c639a93b41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ea7d11fb-3bc4-4d8e-8544-33ed76ff1657",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 19,
+      "total_deletions": 5,
+      "accepted_lines": 19,
+      "overriden_lines": 0
+    }
+  }
+}
