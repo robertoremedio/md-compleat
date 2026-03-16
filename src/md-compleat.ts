@@ -340,6 +340,42 @@ export class MdCompleat extends LitElement {
       to { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
 
+    .editor.ai-completing::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--md-compleat-ai-chip-border, #7c3aed);
+      animation: md-compleat-progress-complete 0.3s ease-out forwards;
+      z-index: 10;
+    }
+
+    @keyframes md-compleat-progress-complete {
+      from { transform: translateX(-100%); }
+      to { transform: translateX(0); }
+    }
+
+    .ai-success-toast {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75em;
+      color: rgba(0, 0, 0, 0.55);
+      z-index: 20;
+      animation: md-compleat-toast-in 0.2s ease-out;
+    }
+
+    .ai-success-toast svg {
+      width: 14px;
+      height: 14px;
+      color: #16a34a;
+    }
+
   `;
 
   @property({ type: String }) content = '';
@@ -353,12 +389,14 @@ export class MdCompleat extends LitElement {
   @property({ type: String, attribute: 'ai-proxy-headers' }) aiProxyHeaders = '';
 
   @state() private _errorMessage: string | null = null;
+  @state() private _showSuccess = false;
 
   private _editor: Editor | null = null;
   private _updatingFromEditor = false;
   private _aiProvider: AiProvider | null = null;
   private _cachedProvider: AiProvider | null = null;
   private _errorToastTimer: ReturnType<typeof setTimeout> | null = null;
+  private _successTimer: ReturnType<typeof setTimeout> | null = null;
 
   set aiProvider(provider: AiProvider | null) {
     this._aiProvider = provider;
@@ -389,6 +427,8 @@ export class MdCompleat extends LitElement {
   override render() {
     return html`<div class="editor"></div>${this._errorMessage
         ? html`<div class="ai-error-toast">${this._errorMessage}</div>`
+        : ''}${this._showSuccess
+        ? html`<div class="ai-success-toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>`
         : ''}`;
   }
 
@@ -426,6 +466,10 @@ export class MdCompleat extends LitElement {
       clearTimeout(this._errorToastTimer);
       this._errorToastTimer = null;
     }
+    if (this._successTimer) {
+      clearTimeout(this._successTimer);
+      this._successTimer = null;
+    }
     this._editor?.storage.aiExecute?.abortController?.abort();
     this.renderRoot.querySelector('.editor')?.classList.remove('ai-executing');
     this._editor?.destroy();
@@ -435,6 +479,19 @@ export class MdCompleat extends LitElement {
   getMarkdown(): string {
     if (!this._editor) return '';
     return this._editor.storage.markdown.getMarkdown();
+  }
+
+  private _showCompletionSequence(element: Element) {
+    element.classList.add('ai-completing');
+    // Use setTimeout as fallback since JSDOM doesn't fire animationend
+    setTimeout(() => {
+      element.classList.remove('ai-completing');
+      this._showSuccess = true;
+      this._successTimer = setTimeout(() => {
+        this._showSuccess = false;
+        this._successTimer = null;
+      }, 2000);
+    }, 300);
   }
 
   private _initEditor() {
@@ -468,6 +525,9 @@ export class MdCompleat extends LitElement {
           getProvider: () => this.getActiveProvider(),
           onExecutionStateChange: (executing: boolean) => {
             (element as HTMLElement).classList.toggle('ai-executing', executing);
+            if (executing) {
+              this._showSuccess = false;
+            }
           },
           onError: (error: Error) => {
             if (this._errorToastTimer) {
@@ -495,6 +555,10 @@ export class MdCompleat extends LitElement {
           }),
         );
       },
+    });
+
+    this._editor.view.dom.addEventListener('ai-completed', () => {
+      this._showCompletionSequence(element);
     });
   }
 }
