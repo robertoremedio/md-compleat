@@ -1,0 +1,29 @@
+README.md
+  0c4379c4b8595dfd 33,35,38-48,53
+vite.standalone.config.ts
+  0c4379c4b8595dfd 1-17
+src/__tests__/npm-package-config.test.ts
+  0c4379c4b8595dfd 36-39
+package.json
+  0c4379c4b8595dfd 15-18,27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "5bb83a281ec90a05ffd61d8d6de015175c55fbfd",
+  "prompts": {
+    "0c4379c4b8595dfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6184387b-bb41-4f36-8a1e-cbebb40a52ab",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 40,
+      "total_deletions": 6,
+      "accepted_lines": 40,
+      "overriden_lines": 0
+    }
+  }
+}
