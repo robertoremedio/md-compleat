@@ -133,20 +133,22 @@ editor.aiProvider = provider;
 
 ## CSS Custom Properties
 
+The component adapts to light and dark modes automatically using `light-dark()`. All color properties can be overridden.
+
 | Property | Default | Description |
 |----------|---------|-------------|
 | `--md-compleat-font-family` | `system-ui, -apple-system, sans-serif` | Main font family |
-| `--md-compleat-font-mono` | `ui-monospace, 'SFMono-Regular', 'SF Mono', Menlo, Consolas, monospace` | Monospace font family |
+| `--md-compleat-font-mono` | `ui-monospace, 'SFMono-Regular', ...` | Monospace font family |
 | `--md-compleat-max-width` | `65ch` | Maximum width of the editor |
 | `--md-compleat-max-height` | `none` | Maximum height of the editor |
 | `--md-compleat-focus-outline` | `2px solid highlight` | Focus outline style |
-| `--md-compleat-code-bg` | `rgba(0, 0, 0, 0.06)` | Code block background color |
-| `--md-compleat-blockquote-border` | `3px solid rgba(0, 0, 0, 0.2)` | Blockquote left border |
-| `--md-compleat-hr-color` | `rgba(0, 0, 0, 0.15)` | Horizontal rule color |
-| `--md-compleat-table-border` | `1px solid rgba(0, 0, 0, 0.15)` | Table border style |
-| `--md-compleat-link-color` | `#1a6be0` | Link color |
-| `--md-compleat-ai-highlight` | `rgba(74, 144, 226, 0.15)` | AI highlight background |
-| `--md-compleat-ai-chip-bg` | `#f0e6ff` | AI directive chip background |
+| `--md-compleat-code-bg` | adapts to light/dark | Code block background color |
+| `--md-compleat-blockquote-border` | adapts to light/dark | Blockquote left border |
+| `--md-compleat-hr-color` | adapts to light/dark | Horizontal rule color |
+| `--md-compleat-table-border` | adapts to light/dark | Table border style |
+| `--md-compleat-link-color` | adapts to light/dark | Link color |
+| `--md-compleat-ai-highlight` | adapts to light/dark | AI highlight background |
+| `--md-compleat-ai-chip-bg` | adapts to light/dark | AI directive chip background |
 | `--md-compleat-ai-chip-border` | `#7c3aed` | AI directive chip border color |
 
 ## Events
