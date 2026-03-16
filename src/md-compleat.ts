@@ -259,9 +259,15 @@ export class MdCompleat extends LitElement {
     }
 
     .ai-chip__icon {
+      all: unset;
       color: var(--_muted);
       margin-right: 0.5em;
       flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .ai-chip__icon:hover {
+      color: var(--_fg);
     }
 
     .ai-chip__instruction {
@@ -605,6 +611,12 @@ export class MdCompleat extends LitElement {
 
     this._editor.view.dom.addEventListener('ai-completed', () => {
       this._showCompletionSequence(element);
+    });
+
+    this._editor.view.dom.addEventListener('ai-execute-request', () => {
+      const executeAi = this._editor?.extensionManager.extensions
+        .find((e) => e.name === 'aiExecute')?.storage.executeAi;
+      if (executeAi) executeAi();
     });
   }
 }

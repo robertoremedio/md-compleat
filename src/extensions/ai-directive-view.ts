@@ -9,9 +9,16 @@ export function aiDirectiveNodeView({ node, editor, getPos }: NodeViewRendererPr
   dom.classList.add('ai-chip');
   dom.setAttribute('data-variant', currentNode.attrs.variant);
 
-  const icon = document.createElement('span');
+  const icon = document.createElement('button');
   icon.classList.add('ai-chip__icon');
   icon.textContent = '▶';
+  icon.type = 'button';
+  icon.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dom.dispatchEvent(
+      new CustomEvent('ai-execute-request', { bubbles: true, composed: true }),
+    );
+  });
   dom.appendChild(icon);
 
   const toggle = document.createElement('button');
@@ -132,7 +139,8 @@ export function aiDirectiveNodeView({ node, editor, getPos }: NodeViewRendererPr
       return (
         target instanceof HTMLInputElement ||
         target instanceof HTMLTextAreaElement ||
-        target.classList?.contains('ai-chip__toggle')
+        target.classList?.contains('ai-chip__toggle') ||
+        target.classList?.contains('ai-chip__icon')
       );
     },
     ignoreMutation() {
