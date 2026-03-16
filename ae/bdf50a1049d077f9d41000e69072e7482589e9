@@ -1,0 +1,23 @@
+src/ai/prompt.ts
+  442428d4821f4e6d 2,4,12-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "aebdf50a1049d077f9d41000e69072e7482589e9",
+  "prompts": {
+    "442428d4821f4e6d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "70fea789-f881-46e3-8265-8e3ba4c7fa55",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 9,
+      "total_deletions": 3,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    }
+  }
+}
