@@ -120,6 +120,45 @@ const provider = createProvider({
 editor.aiProvider = provider;
 ```
 
+## AI Directives
+
+AI directives are special inline blocks that hold an instruction for the AI provider. They are stored in markdown as `<ai instruction="..." />` (self-closing) or `<ai>...</ai>` (block).
+
+### Inserting a Directive
+
+There are three ways to insert an AI directive in the editor:
+
+1. **Slash command (with space)** — type `/ai ` (followed by a space) on an empty line. The text is replaced by a directive chip and the editor enters edit mode so you can type the instruction.
+
+2. **Slash command (dropdown)** — type `/ai` and select the suggestion from the dropdown (Enter or click). Same result as above.
+
+3. **Keyboard shortcut** — press the shortcut configured via the `ai-shortcut` attribute (e.g. `Ctrl-Shift-a`). This inserts a directive at the current cursor position.
+
+> **Note:** Typing `<ai instruction="..." />` literally in the editor will **not** create a directive node — it will be treated as plain text and the angle brackets will be escaped on save. Always use one of the methods above.
+
+### Editing a Directive
+
+Click the directive chip to enter inline edit mode. Self-closing directives show a single-line input; block directives show a textarea. Press **Escape** or click outside to confirm.
+
+### Executing a Directive
+
+Click the play button (▶) on a directive chip, or place the cursor on a directive and press the shortcut configured via `ai-execute-shortcut`. The editor sends the full document context and the directive instruction to the active AI provider.
+
+### Markdown Syntax
+
+When editing markdown files outside the editor, use these formats:
+
+```markdown
+<!-- Self-closing (inline instruction) -->
+<ai instruction="summarize the paragraph above" />
+
+<!-- Block (multi-line instruction) -->
+<ai>
+rewrite this section to be more concise
+and add examples
+</ai>
+```
+
 ## Programmatic API
 
 | Method | Returns | Description |
