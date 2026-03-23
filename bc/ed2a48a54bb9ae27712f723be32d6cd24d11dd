@@ -1,0 +1,23 @@
+README.md
+  5b7401c16b0beac7 123-161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "bced2a48a54bb9ae27712f723be32d6cd24d11dd",
+  "prompts": {
+    "5b7401c16b0beac7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f8eb0349-f1e7-44ef-8ee2-702d2fecafc5",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Roberto Remedio <rremedio@gmail.com>",
+      "messages": [],
+      "total_additions": 39,
+      "total_deletions": 0,
+      "accepted_lines": 39,
+      "overriden_lines": 0
+    }
+  }
+}
