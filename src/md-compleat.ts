@@ -285,6 +285,28 @@ export class MdCompleat extends LitElement {
       word-break: break-word;
     }
 
+    .ai-chip__input {
+      flex: 1;
+      min-width: 0;
+      font: inherit;
+      font-family: var(--md-compleat-font-mono);
+      color: inherit;
+      background: var(--_surface);
+      border: 1px solid var(--_border);
+      border-radius: 3px;
+      padding: 0.15em 0.35em;
+      resize: vertical;
+    }
+
+    .ai-chip__input:focus {
+      outline: none;
+      border-color: var(--md-compleat-ai-chip-border, #7c3aed);
+    }
+
+    .ai-chip[data-variant='block'] {
+      align-items: flex-start;
+    }
+
     .ai-chip__toggle {
       background: none;
       border: none;
