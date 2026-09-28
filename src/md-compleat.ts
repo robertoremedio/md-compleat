@@ -243,6 +243,7 @@ export class MdCompleat extends LitElement {
     /* AI highlight marks */
     mark[data-ai-highlight] {
       background: var(--md-compleat-ai-highlight, rgba(74, 144, 226, 0.15));
+      color: inherit;
       transition: background 0.3s ease;
     }
 

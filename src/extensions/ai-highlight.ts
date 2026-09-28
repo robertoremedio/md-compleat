@@ -15,7 +15,7 @@ export const AiHighlight = Mark.create({
       {
         'data-ai-highlight': '',
         style:
-          'background: var(--md-compleat-ai-highlight, rgba(74, 144, 226, 0.15))',
+          'background: var(--md-compleat-ai-highlight, rgba(74, 144, 226, 0.15)); color: inherit',
       },
       0,
     ];
