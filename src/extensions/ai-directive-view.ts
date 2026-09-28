@@ -35,6 +35,17 @@ export function aiDirectiveNodeView({ node, editor, getPos }: NodeViewRendererPr
   let instructionEl = createInstructionSpan();
   dom.appendChild(instructionEl);
 
+  const contentEl = document.createElement('div');
+  contentEl.classList.add('ai-chip__content');
+  syncContent();
+
+  function syncContent() {
+    const { content, variant } = currentNode.attrs;
+    contentEl.textContent = content;
+    if (content && variant === 'block') dom.appendChild(contentEl);
+    else contentEl.remove();
+  }
+
   // Auto-enter edit mode for empty instructions
   if (!currentNode.attrs.instruction) {
     queueMicrotask(() => enterEditMode(true));
@@ -118,7 +129,7 @@ export function aiDirectiveNodeView({ node, editor, getPos }: NodeViewRendererPr
     if (existing) {
       existing.replaceWith(instructionEl);
     } else {
-      dom.appendChild(instructionEl);
+      dom.insertBefore(instructionEl, contentEl.parentNode ? contentEl : null);
     }
   }
 
@@ -129,6 +140,7 @@ export function aiDirectiveNodeView({ node, editor, getPos }: NodeViewRendererPr
       if (updatedNode.type !== currentNode.type) return false;
       currentNode = updatedNode;
       dom.setAttribute('data-variant', currentNode.attrs.variant);
+      syncContent();
       if (!editing) {
         instructionEl.textContent = currentNode.attrs.instruction;
       }

@@ -113,6 +113,21 @@ describe('AI directive chip rendering', () => {
     });
   });
 
+  describe('block content preview', () => {
+    it('shows the block content read-only below the instruction', async () => {
+      const el = await createElement({
+        content: '<ai instruction="Rewrite concisely">Some long paragraph here.</ai>',
+      });
+      const content = el.shadowRoot!.querySelector('.ai-chip__content');
+      expect(content?.textContent).toBe('Some long paragraph here.');
+    });
+
+    it('has no content preview when content is empty', async () => {
+      const el = await createElement({ content: '<ai>expand this section</ai>' });
+      expect(el.shadowRoot!.querySelector('.ai-chip__content')).toBeNull();
+    });
+  });
+
   describe('chip updates on content change', () => {
     it('updates instruction text when node attributes change via setContent', async () => {
       const el = await createElement();
