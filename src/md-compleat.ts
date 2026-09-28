@@ -269,7 +269,7 @@ export class MdCompleat extends LitElement {
     }
 
     .ai-chip__icon:hover {
-      color: var(--_fg);
+      color: var(--_muted-strong);
     }
 
     .ai-chip__instruction {
