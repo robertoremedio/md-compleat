@@ -349,4 +349,47 @@ describe('AiDirective node extension', () => {
       expect(aiNode.attrs.variant).toBe('self-closing');
     });
   });
+
+  describe('block directive round-trip', () => {
+    const md = (el: MdCompleat) =>
+      ((el as any)._editor.storage.markdown.getMarkdown() as string).trim();
+    const aiAttrs = (el: MdCompleat) =>
+      (el as any)._editor
+        .getJSON()
+        .content?.find((n: any) => n.type === 'aiDirective')?.attrs;
+
+    it('keeps instruction and content of <ai instruction="x">content</ai>', async () => {
+      const input = '<ai instruction="Rewrite concisely">Some long paragraph here.</ai>';
+      const el = await createElement({ content: input });
+      expect(md(el)).toBe(input);
+      expect(aiAttrs(el)).toEqual({
+        instruction: 'Rewrite concisely',
+        variant: 'block',
+        content: 'Some long paragraph here.',
+      });
+    });
+
+    it('keeps the legacy <ai>text</ai> form as instruction', async () => {
+      const input = '<ai>rewrite this section</ai>';
+      const el = await createElement({ content: input });
+      expect(md(el)).toBe(input);
+      expect(aiAttrs(el)).toEqual({
+        instruction: 'rewrite this section',
+        variant: 'block',
+        content: '',
+      });
+    });
+
+    it('keeps multiline content', async () => {
+      const input = '<ai instruction="x">\nlinha 1\n\nlinha 2\n</ai>';
+      const el = await createElement({ content: input });
+      expect(md(el)).toBe(input);
+    });
+
+    it('keeps content of <ai instruction="x">text</ai> set as HTML', async () => {
+      const el = await createElement();
+      (el as any)._editor.commands.setContent('<ai instruction="x">texto</ai>');
+      expect(aiAttrs(el)).toEqual({ instruction: 'x', variant: 'block', content: 'texto' });
+    });
+  });
 });
