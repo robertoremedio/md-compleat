@@ -698,6 +698,33 @@ describe('AiExecute ai-error event', () => {
 
     expect(errorHandler).not.toHaveBeenCalled();
   });
+
+  it('does NOT emit ai-error when provider rejects with a plain Error after Escape', async () => {
+    const provider: AiProvider = {
+      execute: vi.fn().mockImplementation((_doc, signal) => {
+        return new Promise((_resolve, reject) => {
+          signal.addEventListener('abort', () => reject(new Error('Aborted')));
+        });
+      }),
+    };
+    const el = await createElement();
+    el.aiProvider = provider;
+    await el.updateComplete;
+
+    const editor = (el as any)._editor!;
+    editor.commands.setContent('<ai instruction="test" />');
+
+    const errorHandler = vi.fn();
+    editor.view.dom.addEventListener('ai-error', errorHandler);
+
+    triggerShortcut(el, 'Enter', { ctrlKey: true });
+    await new Promise((r) => setTimeout(r, 50));
+
+    triggerShortcut(el, 'Escape');
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(errorHandler).not.toHaveBeenCalled();
+  });
 });
 
 // ---------------------------------------------------------------------------

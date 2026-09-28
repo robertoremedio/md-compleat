@@ -239,7 +239,7 @@ describe('CliProvider', () => {
       controller.abort();
 
       // The promise should reject
-      await expect(promise).rejects.toThrow();
+      await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
       // And the child process should be killed
       expect(mockChild.kill).toHaveBeenCalled();
     });
@@ -249,7 +249,7 @@ describe('CliProvider', () => {
       const controller = new AbortController();
       controller.abort();
 
-      await expect(provider.execute('doc', controller.signal)).rejects.toThrow();
+      await expect(provider.execute('doc', controller.signal)).rejects.toMatchObject({ name: 'AbortError' });
       // Should NOT have spawned a process
       expect(spawnMock).not.toHaveBeenCalled();
     });

@@ -19,7 +19,7 @@ export class CliProvider implements AiProvider {
 
   async execute(document: string, signal?: AbortSignal): Promise<string> {
     if (signal?.aborted) {
-      throw new Error('Aborted');
+      throw new DOMException('Aborted', 'AbortError');
     }
 
     let spawn: SpawnFn;
@@ -55,7 +55,7 @@ export class CliProvider implements AiProvider {
 
       const onAbort = () => {
         child.kill();
-        safeReject(new Error('Aborted'));
+        safeReject(new DOMException('Aborted', 'AbortError'));
         cleanup();
       };
 
