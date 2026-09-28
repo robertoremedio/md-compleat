@@ -122,7 +122,7 @@ editor.aiProvider = provider;
 
 ## AI Directives
 
-AI directives are special inline blocks that hold an instruction for the AI provider. They are stored in markdown as `<ai instruction="..." />` (self-closing) or `<ai>...</ai>` (block).
+AI directives are special inline blocks that hold an instruction for the AI provider. They are stored in markdown as `<ai instruction="..." />` (self-closing) or `<ai instruction="...">content</ai>` (block).
 
 ### Inserting a Directive
 
@@ -152,12 +152,16 @@ When editing markdown files outside the editor, use these formats:
 <!-- Self-closing (inline instruction) -->
 <ai instruction="summarize the paragraph above" />
 
-<!-- Block (multi-line instruction) -->
-<ai>
-rewrite this section to be more concise
-and add examples
+<!-- Block (instruction applied to the enclosed content) -->
+<ai instruction="rewrite this section to be more concise">
+This section has a long paragraph that
+the AI will rewrite.
 </ai>
 ```
+
+The legacy form `<ai>text</ai>`, without an `instruction` attribute, is still read: the text between the tags is taken as the instruction, as in the self-closing form.
+
+In the editor, the block content is shown read-only below the instruction in the chip; only the instruction is editable.
 
 ## Programmatic API
 

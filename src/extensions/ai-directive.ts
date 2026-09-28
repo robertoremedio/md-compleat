@@ -24,6 +24,8 @@ export const AiDirective = Node.create<AiDirectiveOptions>({
     return {
       instruction: { default: '' },
       variant: { default: 'self-closing' },
+      // Raw markdown the instruction applies to (block variant only)
+      content: { default: '' },
     };
   },
 
@@ -54,7 +56,15 @@ export const AiDirective = Node.create<AiDirectiveOptions>({
           const variant = el.getAttribute('data-variant');
           const attrInstruction = el.getAttribute('instruction');
           if (variant === 'block') {
-            return { instruction: attrInstruction || '', variant: 'block' };
+            return {
+              instruction: attrInstruction || '',
+              variant: 'block',
+              content: el.getAttribute('data-content') || '',
+            };
+          }
+          const text = el.textContent || '';
+          if (attrInstruction !== null && text.trim()) {
+            return { instruction: attrInstruction, variant: 'block', content: text };
           }
           if (attrInstruction !== null) {
             return { instruction: attrInstruction, variant: 'self-closing' };
@@ -68,7 +78,14 @@ export const AiDirective = Node.create<AiDirectiveOptions>({
 
   renderHTML({ node }) {
     if (node.attrs.variant === 'block') {
-      return ['ai', { instruction: node.attrs.instruction, 'data-variant': 'block' }];
+      return [
+        'ai',
+        {
+          instruction: node.attrs.instruction,
+          'data-variant': 'block',
+          'data-content': node.attrs.content,
+        },
+      ];
     }
     return ['ai', mergeAttributes({ instruction: node.attrs.instruction })];
   },
@@ -119,10 +136,12 @@ export const AiDirective = Node.create<AiDirectiveOptions>({
     return {
       markdown: {
         serialize(state: any, node: any) {
-          if (node.attrs.variant === 'block') {
-            state.write(
-              `<ai>${node.attrs.instruction}</ai>`,
-            );
+          const { instruction, content } = node.attrs;
+          if (node.attrs.variant === 'block' && content) {
+            const body = content.includes('\n') ? `\n${content}\n` : content;
+            state.write(`<ai instruction="${escapeAttr(instruction)}">${body}</ai>`);
+          } else if (node.attrs.variant === 'block') {
+            state.write(`<ai>${instruction}</ai>`);
           } else {
             state.write(
               `<ai instruction="${escapeAttr(node.attrs.instruction)}" />`,
@@ -174,14 +193,15 @@ export const AiDirective = Node.create<AiDirectiveOptions>({
                   true,
                 );
                 const innerMatch = rawContent.match(
-                  /^<ai>([\s\S]*?)<\/ai>/,
+                  /^<ai(\s[^>]*)?>([\s\S]*?)<\/ai>/,
                 );
+                const attrMatch = innerMatch?.[1]?.match(/instruction="([^"]*)"/);
                 let tokenContent: string;
-                if (innerMatch) {
-                  const inner = innerMatch[1]
-                    .replace(/&/g, '&amp;')
-                    .replace(/"/g, '&quot;');
-                  tokenContent = `<ai instruction="${inner}" data-variant="block"></ai>\n`;
+                if (innerMatch && attrMatch) {
+                  const content = innerMatch[2].replace(/^\n/, '').replace(/\n$/, '');
+                  tokenContent = `<ai instruction="${attrMatch[1]}" data-variant="block" data-content="${escapeAttr(content)}"></ai>\n`;
+                } else if (innerMatch && !innerMatch[1]) {
+                  tokenContent = `<ai instruction="${escapeAttr(innerMatch[2])}" data-variant="block"></ai>\n`;
                 } else {
                   tokenContent = rawContent;
                 }

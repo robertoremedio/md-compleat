@@ -249,6 +249,7 @@ export class MdCompleat extends LitElement {
     /* AI directive chips */
     .ai-chip {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       background: var(--md-compleat-ai-chip-bg, #f0e6ff);
       border-left: 3px solid var(--md-compleat-ai-chip-border, #7c3aed);
@@ -273,6 +274,14 @@ export class MdCompleat extends LitElement {
     .ai-chip__instruction {
       font-family: var(--md-compleat-font-mono);
       flex: 1;
+      word-break: break-word;
+    }
+
+    .ai-chip__content {
+      flex-basis: 100%;
+      margin-top: 0.25em;
+      color: var(--_muted);
+      white-space: pre-wrap;
       word-break: break-word;
     }
 

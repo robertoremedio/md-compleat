@@ -188,7 +188,7 @@ export const AiExecute = Extension.create<AiExecuteOptions>({
           }
         })
         .catch((err) => {
-          if (err?.name === 'AbortError') return;
+          if (controller.signal.aborted || err?.name === 'AbortError') return;
           console.error('AiExecute error:', err);
           if (!editor.isDestroyed) {
             editor.setEditable(true, false);

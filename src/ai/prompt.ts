@@ -7,7 +7,10 @@ The document contains <ai> directive tags. Process them as follows:
    Replace the entire tag with the generated content.
 
 2. Block: <ai instruction="Rewrite this paragraph to be more concise">existing content here</ai>
-   Replace the entire tag (including its content) with the improved version.
+   Apply the instruction to the content between the tags and replace the entire tag (including its content) with the result.
+
+3. Legacy block: <ai>Write a summary of the project</ai>
+   The text between the tags is the instruction, not content. Replace the entire tag with the generated content.
 
 Rules:
 - Your output must be ONLY the complete Markdown document with all <ai> tags replaced by generated content.
