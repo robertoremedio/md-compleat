@@ -19373,15 +19373,22 @@ function kw({ node: e, editor: t, getPos: n }) {
 	}), o.appendChild(s);
 	let c = document.createElement("button");
 	c.classList.add("ai-chip__toggle"), c.textContent = "⤢", c.type = "button", c.addEventListener("click", (e) => {
-		e.stopPropagation(), d({ variant: r.attrs.variant === "self-closing" ? "block" : "self-closing" });
+		e.stopPropagation(), p({ variant: r.attrs.variant === "self-closing" ? "block" : "self-closing" });
 	}), o.appendChild(c);
-	let l = u();
-	o.appendChild(l), r.attrs.instruction || queueMicrotask(() => f(!0));
-	function u() {
-		let e = document.createElement("span");
-		return e.classList.add("ai-chip__instruction"), e.textContent = r.attrs.instruction, e.addEventListener("click", () => f(!1)), e;
+	let l = f();
+	o.appendChild(l);
+	let u = document.createElement("div");
+	u.classList.add("ai-chip__content"), d();
+	function d() {
+		let { content: e, variant: t } = r.attrs;
+		u.textContent = e, e && t === "block" ? o.appendChild(u) : u.remove();
 	}
-	function d(e) {
+	r.attrs.instruction || queueMicrotask(() => m(!0));
+	function f() {
+		let e = document.createElement("span");
+		return e.classList.add("ai-chip__instruction"), e.textContent = r.attrs.instruction, e.addEventListener("click", () => m(!1)), e;
+	}
+	function p(e) {
 		let i = typeof n == "function" ? n() : void 0;
 		if (i == null) return;
 		let { tr: a } = t.state;
@@ -19390,15 +19397,15 @@ function kw({ node: e, editor: t, getPos: n }) {
 			...e
 		}), t.view.dispatch(a);
 	}
-	function f(e) {
+	function m(e) {
 		if (a || i) return;
 		i = !0;
 		let t = r.attrs.variant === "block", n = t ? document.createElement("textarea") : document.createElement("input");
 		t || (n.type = "text"), t && (n.rows = 4), n.value = r.attrs.instruction, n.classList.add("ai-chip__input");
 		let o = () => {
-			a || (i = !1, d({ instruction: n.value }), p());
+			a || (i = !1, p({ instruction: n.value }), h());
 		}, s = () => {
-			a || (i = !1, p());
+			a || (i = !1, h());
 		};
 		n.addEventListener("keydown", ((e) => {
 			e.key === "Enter" && !t ? (e.preventDefault(), n.removeEventListener("blur", o), o()) : e.key === "Escape" && (e.preventDefault(), n.removeEventListener("blur", o), s());
@@ -19406,17 +19413,17 @@ function kw({ node: e, editor: t, getPos: n }) {
 			a || !i || (n.addEventListener("blur", o), n.focus());
 		}, 0) : (n.addEventListener("blur", o), n.focus());
 	}
-	function p() {
+	function h() {
 		if (a) return;
-		l = u();
+		l = f();
 		let e = o.querySelector("input, textarea");
-		e ? e.replaceWith(l) : o.appendChild(l);
+		e ? e.replaceWith(l) : o.insertBefore(l, u.parentNode ? u : null);
 	}
 	return {
 		dom: o,
 		contentDOM: null,
 		update(e) {
-			return e.type === r.type ? (r = e, o.setAttribute("data-variant", r.attrs.variant), i || (l.textContent = r.attrs.instruction), !0) : !1;
+			return e.type === r.type ? (r = e, o.setAttribute("data-variant", r.attrs.variant), d(), i || (l.textContent = r.attrs.instruction), !0) : !1;
 		},
 		stopEvent(e) {
 			let t = e.target;
@@ -19445,7 +19452,8 @@ var jw = U.create({
 	addAttributes() {
 		return {
 			instruction: { default: "" },
-			variant: { default: "self-closing" }
+			variant: { default: "self-closing" },
+			content: { default: "" }
 		};
 	},
 	parseHTML() {
@@ -19462,9 +19470,16 @@ var jw = U.create({
 					}
 				}
 				let n = t.getAttribute("data-variant"), r = t.getAttribute("instruction");
-				return n === "block" ? {
+				if (n === "block") return {
 					instruction: r || "",
-					variant: "block"
+					variant: "block",
+					content: t.getAttribute("data-content") || ""
+				};
+				let i = t.textContent || "";
+				return r !== null && i.trim() ? {
+					instruction: r,
+					variant: "block",
+					content: i
 				} : r === null ? {
 					instruction: t.textContent || "",
 					variant: "block"
@@ -19478,7 +19493,8 @@ var jw = U.create({
 	renderHTML({ node: e }) {
 		return e.attrs.variant === "block" ? ["ai", {
 			instruction: e.attrs.instruction,
-			"data-variant": "block"
+			"data-variant": "block",
+			"data-content": e.attrs.content
 		}] : ["ai", V({ instruction: e.attrs.instruction })];
 	},
 	addNodeView() {
@@ -19509,7 +19525,12 @@ var jw = U.create({
 	addStorage() {
 		return { markdown: {
 			serialize(e, t) {
-				t.attrs.variant === "block" ? e.write(`<ai>${t.attrs.instruction}</ai>`) : e.write(`<ai instruction="${Aw(t.attrs.instruction)}" />`), e.closeBlock(t);
+				let { instruction: n, content: r } = t.attrs;
+				if (t.attrs.variant === "block" && r) {
+					let t = r.includes("\n") ? `\n${r}\n` : r;
+					e.write(`<ai instruction="${Aw(n)}">${t}</ai>`);
+				} else t.attrs.variant === "block" ? e.write(`<ai>${n}</ai>`) : e.write(`<ai instruction="${Aw(t.attrs.instruction)}" />`);
+				e.closeBlock(t);
 			},
 			parse: { setup(e) {
 				e.block.ruler.before("html_block", "ai_directive", (e, t, n, r) => {
@@ -19528,10 +19549,13 @@ var jw = U.create({
 							break;
 						}
 					}
-					let c = e.getLines(t, s, e.blkIndent, !0), l = c.match(/^<ai>([\s\S]*?)<\/ai>/), u;
-					u = l ? `<ai instruction="${l[1].replace(/&/g, "&amp;").replace(/"/g, "&quot;")}" data-variant="block"></ai>\n` : c;
-					let d = e.push("html_block", "", 0);
-					return d.content = u, d.map = [t, s], e.line = s, !0;
+					let c = e.getLines(t, s, e.blkIndent, !0), l = c.match(/^<ai(\s[^>]*)?>([\s\S]*?)<\/ai>/), u = l?.[1]?.match(/instruction="([^"]*)"/), d;
+					if (l && u) {
+						let e = l[2].replace(/^\n/, "").replace(/\n$/, "");
+						d = `<ai instruction="${u[1]}" data-variant="block" data-content="${Aw(e)}"></ai>\n`;
+					} else d = l && !l[1] ? `<ai instruction="${Aw(l[2])}" data-variant="block"></ai>\n` : c;
+					let f = e.push("html_block", "", 0);
+					return f.content = d, f.map = [t, s], e.line = s, !0;
 				});
 			} }
 		} };
@@ -19640,7 +19664,7 @@ var jw = U.create({
 //#endregion
 //#region src/ai/prompt.ts
 function Fw() {
-	return "You are a document processor. You receive a Markdown document and return it with modifications. You are NOT a chatbot. Do NOT converse, ask questions, or add commentary. Your entire response must be the processed Markdown document and nothing else.\n\nThe document contains <ai> directive tags. Process them as follows:\n\n1. Self-closing: <ai instruction=\"Write a summary of the project\" />\n   Replace the entire tag with the generated content.\n\n2. Block: <ai instruction=\"Rewrite this paragraph to be more concise\">existing content here</ai>\n   Replace the entire tag (including its content) with the improved version.\n\nRules:\n- Your output must be ONLY the complete Markdown document with all <ai> tags replaced by generated content.\n- Do not wrap the output in a code block or add any prefix/suffix.\n- Do not alter any part of the document outside of <ai> tags.\n- Preserve all formatting, headings, lists, code blocks, and other Markdown syntax exactly as they appear.\n- If the document has no <ai> tags, return it unchanged.\n- Never include explanations, greetings, or follow-up questions.";
+	return "You are a document processor. You receive a Markdown document and return it with modifications. You are NOT a chatbot. Do NOT converse, ask questions, or add commentary. Your entire response must be the processed Markdown document and nothing else.\n\nThe document contains <ai> directive tags. Process them as follows:\n\n1. Self-closing: <ai instruction=\"Write a summary of the project\" />\n   Replace the entire tag with the generated content.\n\n2. Block: <ai instruction=\"Rewrite this paragraph to be more concise\">existing content here</ai>\n   Apply the instruction to the content between the tags and replace the entire tag (including its content) with the result.\n\n3. Legacy block: <ai>Write a summary of the project</ai>\n   The text between the tags is the instruction, not content. Replace the entire tag with the generated content.\n\nRules:\n- Your output must be ONLY the complete Markdown document with all <ai> tags replaced by generated content.\n- Do not wrap the output in a code block or add any prefix/suffix.\n- Do not alter any part of the document outside of <ai> tags.\n- Preserve all formatting, headings, lists, code blocks, and other Markdown syntax exactly as they appear.\n- If the document has no <ai> tags, return it unchanged.\n- Never include explanations, greetings, or follow-up questions.";
 }
 //#endregion
 //#region src/ai/parse-markdown.ts
@@ -19777,7 +19801,7 @@ var Rw = H.create({
 					}
 				}
 			}).catch((e) => {
-				if (e?.name !== "AbortError" && (console.error("AiExecute error:", e), !n.isDestroyed)) {
+				if (!(o.signal.aborted || e?.name === "AbortError") && (console.error("AiExecute error:", e), !n.isDestroyed)) {
 					n.setEditable(!0, !1);
 					let r = e instanceof Error ? e : Error(String(e));
 					n.view.dom.dispatchEvent(new CustomEvent("ai-error", {
@@ -19894,7 +19918,7 @@ var Rw = H.create({
 		this.command = e.cliCommand;
 	}
 	async execute(e, t) {
-		if (t?.aborted) throw Error("Aborted");
+		if (t?.aborted) throw new DOMException("Aborted", "AbortError");
 		let n;
 		try {
 			n = (await import("child_process")).spawn;
@@ -19916,7 +19940,7 @@ var Rw = H.create({
 			}, d = () => {
 				t && t.removeEventListener("abort", f);
 			}, f = () => {
-				s.kill(), u(/* @__PURE__ */ Error("Aborted")), d();
+				s.kill(), u(new DOMException("Aborted", "AbortError")), d();
 			}, p = [], m = [];
 			s.stdout.on("data", (e) => {
 				p.push(e);
@@ -20175,6 +20199,7 @@ var Kw = H.create({
     /* AI directive chips */
     .ai-chip {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       background: var(--md-compleat-ai-chip-bg, #f0e6ff);
       border-left: 3px solid var(--md-compleat-ai-chip-border, #7c3aed);
@@ -20199,6 +20224,14 @@ var Kw = H.create({
     .ai-chip__instruction {
       font-family: var(--md-compleat-font-mono);
       flex: 1;
+      word-break: break-word;
+    }
+
+    .ai-chip__content {
+      flex-basis: 100%;
+      margin-top: 0.25em;
+      color: var(--_muted);
+      white-space: pre-wrap;
       word-break: break-word;
     }
 
