@@ -35,6 +35,13 @@ describe('AI chip edit box and highlight styles', () => {
     expect(body).toMatch(/background/);
   });
 
+  it('top-aligns the block chip only while its textarea is open', () => {
+    expect(ruleBody(css, /^\.ai-chip\[data-variant='block'\]$/)).toBe('');
+    expect(
+      ruleBody(css, /^\.ai-chip:has\(textarea\.ai-chip__input\)$/),
+    ).toMatch(/align-items:\s*flex-start/);
+  });
+
   it('keeps highlighted text in the surrounding color', () => {
     expect(ruleBody(css, /^mark\[data-ai-highlight\]$/)).toMatch(
       /color:\s*inherit/,

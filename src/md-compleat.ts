@@ -304,7 +304,7 @@ export class MdCompleat extends LitElement {
       border-color: var(--md-compleat-ai-chip-border, #7c3aed);
     }
 
-    .ai-chip[data-variant='block'] {
+    .ai-chip:has(textarea.ai-chip__input) {
       align-items: flex-start;
     }
 
