@@ -243,6 +243,7 @@ export class MdCompleat extends LitElement {
     /* AI highlight marks */
     mark[data-ai-highlight] {
       background: var(--md-compleat-ai-highlight, rgba(74, 144, 226, 0.15));
+      color: inherit;
       transition: background 0.3s ease;
     }
 
@@ -268,7 +269,7 @@ export class MdCompleat extends LitElement {
     }
 
     .ai-chip__icon:hover {
-      color: var(--_fg);
+      color: var(--_muted-strong);
     }
 
     .ai-chip__instruction {
@@ -283,6 +284,28 @@ export class MdCompleat extends LitElement {
       color: var(--_muted);
       white-space: pre-wrap;
       word-break: break-word;
+    }
+
+    .ai-chip__input {
+      flex: 1;
+      min-width: 0;
+      font: inherit;
+      font-family: var(--md-compleat-font-mono);
+      color: inherit;
+      background: var(--_surface);
+      border: 1px solid var(--_border);
+      border-radius: 3px;
+      padding: 0.15em 0.35em;
+      resize: vertical;
+    }
+
+    .ai-chip__input:focus {
+      outline: none;
+      border-color: var(--md-compleat-ai-chip-border, #7c3aed);
+    }
+
+    .ai-chip:has(textarea.ai-chip__input) {
+      align-items: flex-start;
     }
 
     .ai-chip__toggle {
